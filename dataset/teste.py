@@ -1,4 +1,6 @@
 import pandas as pd
 
-df = pd.read_csv('books.csv')
-print(df.columns)
+df = pd.read_csv('dados.csv')
+
+print(df['genero'].unique())
+print(df.describe())
