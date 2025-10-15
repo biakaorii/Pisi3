@@ -53,6 +53,64 @@ O aplicativo permitirá ao usuário:
 - Python (Pandas/Matplotlib) → análise exploratória do dataset.
 - Git/GitHub → versionamento e colaboração.
 
+## 6. Como executar o projeto
+
+IMPORTANTE: Execute os comandos na pasta raiz do projeto — a mesma pasta onde estão `README.md` e `requirements.txt`.
+
+Exemplos de como entrar na pasta do projeto:
+
+- Windows (CMD):
+
+```cmd
+cd caminho\para\sua\pasta\Pisi3
+```
+
+- Linux (bash):
+
+```bash
+cd /caminho/para/sua/pasta/Pisi3
+```
+
+1) Criar a venv
+
+- Windows (CMD):
+
+```cmd
+python -m venv .venv
+```
+
+- Linux (bash):
+
+```bash
+python3 -m venv .venv
+```
+
+2) Ativar a venv
+
+- Windows (CMD):
+
+```cmd
+.venv\Scripts\activate
+```
+
+- Linux (bash):
+
+```bash
+source .venv/bin/activate
+```
+
+3) Instalar as bibliotecas
+
+```cmd
+pip install -r requirements.txt
+```
+
+Quando terminar, você pode desativar a venv com:
+
+```cmd
+deactivate
+```
+
 ## Observação
 
 Este documento segue o modelo inicial solicitado pela disciplina e será atualizado ao longo do curso, incorporando novas análises, funcionalidades do app e resultados finais.
