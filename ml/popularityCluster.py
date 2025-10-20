@@ -52,12 +52,22 @@ pca = PCA(n_components=2)
 X_pca = pca.fit_transform(X_scaled)
 
 #Plotar clusters
+cores = ['red', 'blue', 'green', 'yellow', 'purple']
+nomes_clusters = ['Cluster 0', 'Cluster 1', 'Cluster 2', 'Cluster 3', 'Cluster 4']
 plt.figure(figsize=(8,6))
-plt.scatter(X_pca[:,0], X_pca[:,1], c=df['cluster'], cmap='viridis', alpha=0.4)
+for i in range(len(cores)):
+    plt.scatter(
+        X_pca[df['cluster'] == i, 0],
+        X_pca[df['cluster'] == i, 1],
+        s=50,
+        c=cores[i],
+        label=nomes_clusters[i],
+        alpha=0.4
+    )
 plt.xlabel('PCA 1') 
 plt.ylabel('PCA 2') 
 plt.title('Clusters de livros') 
-plt.colorbar(label='Cluster') 
+plt.legend(title='Clusters', loc='best', fontsize=10, frameon=False)
 plt.show()
 
 #Salvar o DataFrame com os clusters

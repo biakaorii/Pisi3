@@ -1,9 +1,11 @@
 from  sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, balanced_accuracy_score
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, balanced_accuracy_score, RocCurveDisplay 
 import pandas as pd
 import numpy as np
 import os
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 #Encontrar o caminho do dataset
 caminho_atual = os.path.dirname(os.path.abspath(__file__))
@@ -20,6 +22,7 @@ df['popularidade'] = np.where(df['rating'] >= 4.0, 1, 0)
 
 #Criando uma nova feature derivada de abandono
 df['taxa_abandono'] = df['abandonos'] / df['leram']
+df['taxa_avaliacao'] = df['avaliacao'] / df['leram']
 
 #Features e variavel alvo
 features = ['ano', 'paginas', 'leram', 'querem_ler', 'autor', 'taxa_abandono', 'relendo', 'avaliacao', 'resenha']
@@ -55,3 +58,17 @@ print(f"Balanced Accuracy: {bal_acc:.4f}")
 
 auc = roc_auc_score(y_teste, y_proba)
 print(f"ROC-AUC: {auc:.4f}")
+
+# Plotar Matriz de Confusão
+plt.figure(figsize=(5, 4))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+plt.title("Matriz de Confusão")
+plt.xlabel("Previsto")
+plt.ylabel("Real")
+plt.tight_layout()
+plt.show()
+
+# Curva ROC
+RocCurveDisplay.from_estimator(modelo, X_teste, y_teste)
+plt.title(f"Curva ROC (AUC = {auc:.3f})")
+plt.show()
