@@ -54,7 +54,41 @@ df_generos_exploded = df_generos_exploded[df_generos_exploded['genero'].isin(_va
 
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-app.title = "Dashboard de Livros 📚"
+app.title = "Dashboard de Livros"
+
+# Adicionando estilos CSS customizados para fundo acinzentado claro
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+        <style>
+            body {
+                background-color: #f5f5f5 !important;
+                margin: 0;
+                padding: 0;
+            }
+            .container-fluid {
+                background-color: #f5f5f5 !important;
+            }
+            .text-primary {
+                color: #2c3e50 !important;
+            }
+        </style>
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
 
 
 
@@ -70,11 +104,11 @@ def calcular_kpis():
         'livro_mais_abandonado': df.loc[df['abandonos'].idxmax(), 'titulo'],
     }
 
-def criar_card_kpi(titulo, valor, icone="📊"):
+def criar_card_kpi(titulo, valor, icone=""):
     """Cria um card de KPI"""
     return dbc.Card(
         dbc.CardBody([
-            html.H6(f"{icone} {titulo}", className="text-muted"),
+            html.H6(f"{icone} {titulo}".strip(), className="text-muted"),
             html.H3(valor, className="text-primary fw-bold")
         ]),
         className="shadow-sm mb-3"
@@ -86,7 +120,7 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
-            html.H1("📚 Dashboard de Análise de Livros", className="text-center mt-4 mb-4"),
+            html.H1("Dashboard de Análise de Livros", className="text-center mt-4 mb-4"),
             html.Hr()
         ])
     ]),
@@ -145,7 +179,7 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
-            html.H4("📈 Análise de Popularidade", className="mt-3 mb-3"),
+            html.H4("Análise de Popularidade", className="mt-3 mb-3"),
         ])
     ]),
     dbc.Row([
@@ -160,7 +194,7 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
-            html.H4("⭐ Análise de Avaliação", className="mt-3 mb-3"),
+            html.H4("Análise de Avaliação", className="mt-3 mb-3"),
         ])
     ]),
     dbc.Row([
@@ -175,7 +209,7 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
-            html.H4("🎭 Análise por Gênero Literário", className="mt-3 mb-3"),
+            html.H4("Análise por Gênero Literário", className="mt-3 mb-3"),
         ])
     ]),
     dbc.Row([
@@ -189,7 +223,7 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
-            html.H4("🌍 Análise por Idioma", className="mt-3 mb-3"),
+            html.H4("Análise por Idioma", className="mt-3 mb-3"),
         ])
     ]),
     dbc.Row([
@@ -200,7 +234,7 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
-            html.H4("📖 Comportamento de Leitura", className="mt-3 mb-3"),
+            html.H4("Comportamento de Leitura", className="mt-3 mb-3"),
         ])
     ]),
     dbc.Row([
@@ -211,7 +245,7 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
-            html.H4("👥 Análise por Gênero do Público", className="mt-3 mb-3"),
+            html.H4("Análise por Gênero do Público", className="mt-3 mb-3"),
         ])
     ]),
     dbc.Row([
@@ -223,7 +257,7 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             html.Hr(),
-            html.P("Dashboard desenvolvido para análise de dataset de livros 📚", 
+            html.P("Dashboard desenvolvido para análise de dataset de livros", 
                    className="text-center text-muted mb-4")
         ])
     ])
@@ -250,11 +284,11 @@ def atualizar_kpis(genero, idioma, editora, ano_range):
     }
     
     return dbc.Row([
-        dbc.Col(criar_card_kpi("Total de Livros", f"{kpis['total_livros']:,}", "📚"), md=2),
-        dbc.Col(criar_card_kpi("Total de Autores", f"{kpis['total_autores']:,}", "✍️"), md=2),
-        dbc.Col(criar_card_kpi("Total de Editoras", f"{kpis['total_editoras']:,}", "🏢"), md=2),
-        dbc.Col(criar_card_kpi("Rating Médio", f"{kpis['media_rating']:.2f}", "⭐"), md=3),
-        dbc.Col(criar_card_kpi("Total de Resenhas", f"{kpis['total_resenhas']:,}", "💬"), md=3),
+        dbc.Col(criar_card_kpi("Total de Livros", f"{kpis['total_livros']:,}", ""), md=2),
+        dbc.Col(criar_card_kpi("Total de Autores", f"{kpis['total_autores']:,}", ""), md=2),
+        dbc.Col(criar_card_kpi("Total de Editoras", f"{kpis['total_editoras']:,}", ""), md=2),
+        dbc.Col(criar_card_kpi("Rating Médio", f"{kpis['media_rating']:.2f}", ""), md=3),
+        dbc.Col(criar_card_kpi("Total de Resenhas", f"{kpis['total_resenhas']:,}", ""), md=3),
     ])
 
 def filtrar_dados(genero, idioma, editora, ano_range):
@@ -288,7 +322,7 @@ def atualizar_top_livros(genero, idioma, editora, ano_range):
     top_10 = df_filtrado.nlargest(10, 'leram')[['titulo', 'leram']]
     
     fig = px.bar(top_10, x='leram', y='titulo', orientation='h',
-                 title='📚 Top 10 Livros Mais Lidos',
+                 title='Top 10 Livros Mais Lidos',
                  labels={'leram': 'Número de Leituras', 'titulo': 'Livro'},
                  color='leram', color_continuous_scale='Greens')
     fig.update_layout(yaxis={'categoryorder': 'total ascending'}, showlegend=False)
@@ -307,7 +341,7 @@ def atualizar_top_autores(genero, idioma, editora, ano_range):
     top_autores = df_filtrado.groupby('autor')['leram'].sum().nlargest(10).reset_index()
     
     fig = px.bar(top_autores, x='leram', y='autor', orientation='h',
-                 title='✍️ Top 10 Autores Mais Lidos',
+                 title='Top 10 Autores Mais Lidos',
                  labels={'leram': 'Total de Leituras', 'autor': 'Autor'},
                  color='leram', color_continuous_scale='Greens')
     fig.update_layout(yaxis={'categoryorder': 'total ascending'}, showlegend=False)
@@ -328,7 +362,7 @@ def atualizar_top_editoras(genero, idioma, editora, ano_range):
     top_editoras = top_editoras.rename(columns={'titulo': 'publicacoes'})
 
     fig = px.bar(top_editoras, x='publicacoes', y='editora', orientation='h',
-                 title='🏢 Top 10 Editoras com Mais Publicações',
+                 title='Top 10 Editoras com Mais Publicações',
                  labels={'publicacoes': 'Quantidade de Títulos', 'editora': 'Editora'},
                  color='publicacoes', color_continuous_scale='Greens')
     fig.update_layout(yaxis={'categoryorder': 'total ascending'}, showlegend=False)
@@ -347,7 +381,7 @@ def atualizar_livros_ano(genero, idioma, editora, ano_range):
     livros_ano = df_filtrado.groupby('ano').size().reset_index(name='quantidade')
     
     fig = px.line(livros_ano, x='ano', y='quantidade',
-                  title='📅 Distribuição de Livros por Ano de Publicação',
+                  title='Distribuição de Livros por Ano de Publicação',
                   labels={'ano': 'Ano', 'quantidade': 'Número de Livros'},
                   markers=True)
     fig.update_traces(line_color='#2ecc71')
@@ -365,7 +399,7 @@ def atualizar_dist_rating(genero, idioma, editora, ano_range):
     df_filtrado = filtrar_dados(genero, idioma, editora, ano_range)
     
     fig = px.histogram(df_filtrado, x='rating', nbins=30,
-                       title='⭐ Distribuição de Ratings',
+                       title='Distribuição de Ratings',
                        labels={'rating': 'Rating', 'count': 'Frequência'})
     fig.update_traces(marker_color='#2ecc71')
     return fig
@@ -382,7 +416,7 @@ def atualizar_scatter_rating(genero, idioma, editora, ano_range):
     df_filtrado = filtrar_dados(genero, idioma, editora, ano_range)
     
     fig = px.scatter(df_filtrado, x='avaliacao', y='rating',
-                     title='📊 Rating vs Número de Avaliações',
+                     title='Rating vs Número de Avaliações',
                      labels={'avaliacao': 'Número de Avaliações', 'rating': 'Rating'},
                      opacity=0.6, hover_data=['titulo'])
     fig.update_traces(marker=dict(color='#27ae60'))
@@ -403,7 +437,7 @@ def atualizar_melhores_livros(genero, idioma, editora, ano_range):
     top_10 = df_filtrado_min.nlargest(10, 'rating')[['titulo', 'rating', 'avaliacao']]
     
     fig = px.bar(top_10, x='rating', y='titulo', orientation='h',
-                 title='🏆 Top 10 Livros com Melhor Rating (min. 10 avaliações)',
+                 title='Top 10 Livros com Melhor Rating (min. 10 avaliações)',
                  labels={'rating': 'Rating', 'titulo': 'Livro'},
                  color='rating', color_continuous_scale='YlGn',
                  hover_data=['avaliacao'])
@@ -425,7 +459,7 @@ def atualizar_piores_livros(genero, idioma, editora, ano_range):
     bottom_10 = df_filtrado_min.nsmallest(10, 'rating')[['titulo', 'rating', 'avaliacao']]
     
     fig = px.bar(bottom_10, x='rating', y='titulo', orientation='h',
-                 title='👎 Top 10 Livros com Pior Rating (min. 10 avaliações)',
+                 title='Top 10 Livros com Pior Rating (min. 10 avaliações)',
                  labels={'rating': 'Rating', 'titulo': 'Livro'},
                  color='rating', color_continuous_scale='Reds',
                  hover_data=['avaliacao'])
@@ -453,7 +487,7 @@ def atualizar_dist_generos(idioma, ano_range):
         x=top_20_generos.values,
         y=top_20_generos.index,
         orientation='h',
-        title='🎭 Top 20 Gêneros Literários (Contagem)',
+        title='Top 20 Gêneros Literários (Contagem)',
         labels={'x': 'Quantidade', 'y': 'Gênero'},
         color=top_20_generos.values,
         color_continuous_scale='Greens'
@@ -486,7 +520,7 @@ def atualizar_rating_genero(idioma, ano_range):
     fig = px.bar(
         rating_genero.sort_values('media_rating'),
         x='media_rating', y='genero', orientation='h',
-        title='⭐ Top 15 Gêneros com Melhor Rating Médio',
+        title='Top 15 Gêneros com Melhor Rating Médio',
         labels={'media_rating': 'Rating Médio', 'genero': 'Gênero'},
         color='media_rating', color_continuous_scale='YlGn'
     )
@@ -520,7 +554,7 @@ def atualizar_generos_lidos(idioma, ano_range):
     fig.add_trace(go.Bar(name='Querem Ler', x=generos_lidos['genero'], y=generos_lidos['querem_ler'], marker_color='#1abc9c'))
     
     fig.update_layout(
-        title='📊 Top 15 Gêneros: Comportamento de Leitura',
+        title='Top 15 Gêneros: Comportamento de Leitura',
         xaxis_title='Gênero',
         yaxis_title='Quantidade',
         barmode='group'
@@ -541,7 +575,7 @@ def atualizar_dist_idiomas(genero, editora, ano_range):
     fig = px.bar(
         x=idiomas.index,
         y=idiomas.values,
-        title='🌍 Distribuição de Livros por Idioma (Contagem)',
+        title='Distribuição de Livros por Idioma (Contagem)',
         labels={'x': 'Idioma', 'y': 'Quantidade'},
         color=idiomas.values,
         color_continuous_scale='Greens'
@@ -561,7 +595,7 @@ def atualizar_rating_idioma(genero, editora, ano_range):
     rating_idioma = df_filtrado.groupby('idioma')['rating'].mean().sort_values(ascending=False).reset_index()
     
     fig = px.bar(rating_idioma, x='idioma', y='rating',
-                 title='⭐ Rating Médio por Idioma',
+                 title='Rating Médio por Idioma',
                  labels={'idioma': 'Idioma', 'rating': 'Rating Médio'},
                  color='rating', color_continuous_scale='YlGn')
     return fig
@@ -596,7 +630,7 @@ def atualizar_metricas_leitura(genero, idioma, editora, ano_range):
     fig = go.Figure()
     for nome, valor in metricas.items():
         fig.add_trace(go.Bar(name=nome, x=[nome], y=[valor], marker_color=cores.get(nome, '#2ecc71')))
-    fig.update_layout(title='📖 Métricas Gerais de Comportamento de Leitura', xaxis_title='Métrica', yaxis_title='Quantidade', showlegend=False)
+    fig.update_layout(title='Métricas Gerais de Comportamento de Leitura', xaxis_title='Métrica', yaxis_title='Quantidade', showlegend=False)
     return fig
 
 
@@ -628,7 +662,7 @@ def atualizar_taxa_abandono(idioma, ano_range):
     fig = px.bar(
         top_15.sort_values('taxa_abandono'),
         x='taxa_abandono', y='genero', orientation='h',
-        title='🚫 Top 15 Gêneros com Maior Taxa de Abandono (%)',
+        title='Top 15 Gêneros com Maior Taxa de Abandono (%)',
         labels={'genero': 'Gênero', 'taxa_abandono': 'Taxa de Abandono (%)'},
         color='taxa_abandono', color_continuous_scale='Reds'
     )
@@ -651,7 +685,7 @@ def atualizar_leitores_genero(genero, idioma, editora, ano_range):
     total_female = df_filtrado['female'].sum()
     
     fig = px.pie(values=[total_male, total_female], names=['Masculino', 'Feminino'],
-                 title='👥 Distribuição de Leitores por Gênero',
+                 title='Distribuição de Leitores por Gênero',
                  color_discrete_sequence=["#90ce74", "#067923"])
     return fig
 
@@ -682,7 +716,7 @@ def atualizar_generos_publico(idioma, ano_range):
     fig.add_trace(go.Bar(name='Feminino', x=top_15['genero'], y=top_15['female'], marker_color='#067923'))
     
     fig.update_layout(
-        title='📚 Top 15 Gêneros: Leitores por Gênero do Público',
+        title='Top 15 Gêneros: Leitores por Gênero do Público',
         xaxis_title='Gênero Literário',
         yaxis_title='Quantidade de Leitores',
         barmode='stack'
@@ -691,4 +725,4 @@ def atualizar_generos_publico(idioma, ano_range):
     return fig
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=8051)
