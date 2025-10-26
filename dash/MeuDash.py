@@ -68,67 +68,128 @@ app.index_string = '''
         {%css%}
         <style>
             body {
-                background-color: #f5f5f5 !important;
+                background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%) !important;
+                background-attachment: fixed;
                 margin: 0;
                 padding: 0;
+                min-height: 100vh;
             }
             .container-fluid {
-                background-color: #f5f5f5 !important;
+                background: transparent !important;
             }
             .text-primary {
-                color: #2c3e50 !important;
+                color: #2d5016 !important;
             }
+            /* Header com gradiente */
+            h1 {
+                background: linear-gradient(45deg, #388e3c 0%, #2e7d32 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                color: transparent;
+                font-weight: 700;
+            }
+            /* Barra de navegação com gradiente */
             .navigation-bar {
-                background-color: white;
-                border-radius: 10px;
-                padding: 10px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+                border-radius: 15px;
+                padding: 15px;
+                box-shadow: 0 8px 32px rgba(76, 175, 80, 0.3);
+                backdrop-filter: blur(10px);
             }
             .nav-btn {
-                color: #2c3e50 !important;
-                background-color: transparent !important;
-                border: 1px solid #2c3e50 !important;
+                color: white !important;
+                background: rgba(255, 255, 255, 0.1) !important;
+                border: 1px solid rgba(255, 255, 255, 0.2) !important;
                 font-weight: 500;
-                border-radius: 8px;
+                border-radius: 10px;
                 transition: all 0.3s ease;
-                margin: 0 2px;
+                margin: 0 3px;
+                backdrop-filter: blur(10px);
             }
             .nav-btn:hover {
-                background-color: #2c3e50 !important;
+                background: rgba(255, 255, 255, 0.2) !important;
                 color: white !important;
-                transform: translateY(-2px);
+                transform: translateY(-3px);
+                box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
             }
             .nav-btn-active {
-                background-color: #2c3e50 !important;
+                background: rgba(255, 255, 255, 0.3) !important;
                 color: white !important;
+                box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
             }
+            /* KPI Cards com cores */
+            .card {
+                background: linear-gradient(135deg, #ffffff 0%, #f1f8e9 100%) !important;
+                border: none !important;
+                border-radius: 15px !important;
+                border-left: 4px solid transparent !important;
+                background-clip: padding-box !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+                transition: all 0.3s ease !important;
+            }
+            .card:nth-child(1) { border-left-color: #4caf50 !important; }
+            .card:nth-child(2) { border-left-color: #66bb6a !important; }
+            .card:nth-child(3) { border-left-color: #81c784 !important; }
+            .card:nth-child(4) { border-left-color: #2e7d32 !important; }
+            .card:nth-child(5) { border-left-color: #388e3c !important; }
+            .card:hover {
+                transform: translateY(-5px) !important;
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15) !important;
+            }
+            /* Section dividers com gradiente */
             .section-divider {
-                border-top: 3px solid #2c3e50;
+                border: none;
+                height: 3px;
+                background: linear-gradient(90deg, #4caf50 0%, #388e3c 100%);
                 margin: 30px 0 20px 0;
                 border-radius: 2px;
             }
-            /* Efeito hover para gráficos */
+            /* Gráficos com bordas coloridas */
             .graph-container {
                 transition: all 0.4s ease;
                 border-radius: 15px;
-                padding: 8px;
-                margin: 5px;
-                background-color: rgba(255, 255, 255, 0.8);
+                padding: 10px;
+                margin: 8px;
+                background: rgba(255, 255, 255, 0.9);
                 border: 2px solid transparent;
+                backdrop-filter: blur(10px);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             }
             .graph-container:hover {
                 transform: scale(1.005);
-                box-shadow: 0 15px 35px rgba(44, 62, 80, 0.25);
-                background-color: white;
+                box-shadow: 0 15px 40px rgba(76, 175, 80, 0.2);
+                background: rgba(255, 255, 255, 0.95);
                 z-index: 20;
                 position: relative;
-                border: 2px solid #2c3e50;
+                border: 2px solid;
+                border-image: linear-gradient(45deg, #4caf50, #388e3c) 1;
             }
             .graph-row:hover .graph-container:not(:hover) {
                 transform: scale(0.98);
+                opacity: 0.8;
             }
             .plotly-graph-div {
                 border-radius: 10px;
+            }
+            /* Labels dos filtros com cor */
+            label {
+                color: #2e7d32 !important;
+                font-weight: 500 !important;
+                margin-bottom: 8px !important;
+            }
+            /* Dropdowns com estilo */
+            .Select-control {
+                border-radius: 8px !important;
+                border: 1px solid #c8e6c9 !important;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+            }
+            /* Footer com gradiente sutil */
+            .text-muted {
+                background: linear-gradient(45deg, #66bb6a, #4caf50);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
             }
         </style>
     </head>
@@ -617,9 +678,9 @@ def atualizar_piores_livros(genero, idioma, editora, ano_range):
     bottom_10 = df_filtrado_min.nsmallest(10, 'rating')[['titulo', 'rating', 'avaliacao']]
     
     fig = px.bar(bottom_10, x='rating', y='titulo', orientation='h',
-                 title='Top 10 Livros com Pior Rating (min. 10 avaliações)',
-                 labels={'rating': 'Rating', 'titulo': 'Livro'},
-                 color='rating', color_continuous_scale='Reds',
+                 title='Top 10 Livros com Menores Avaliações',
+                 labels={'rating': 'Rating', 'titulo': 'Título'},
+                 color='rating', color_continuous_scale='Greens',
                  hover_data=['avaliacao'])
     fig.update_layout(yaxis={'categoryorder': 'total descending'}, showlegend=False)
     return fig
@@ -707,9 +768,9 @@ def atualizar_generos_lidos(idioma, ano_range):
     }).nlargest(15, 'leram').reset_index()
     
     fig = go.Figure()
-    fig.add_trace(go.Bar(name='Leram', x=generos_lidos['genero'], y=generos_lidos['leram'], marker_color='#2ecc71'))
-    fig.add_trace(go.Bar(name='Abandonos', x=generos_lidos['genero'], y=generos_lidos['abandonos'], marker_color='#e74c3c'))
-    fig.add_trace(go.Bar(name='Querem Ler', x=generos_lidos['genero'], y=generos_lidos['querem_ler'], marker_color='#1abc9c'))
+    fig.add_trace(go.Bar(name='Leram', x=generos_lidos['genero'], y=generos_lidos['leram'], marker_color='#2e7d32'))
+    fig.add_trace(go.Bar(name='Abandonos', x=generos_lidos['genero'], y=generos_lidos['abandonos'], marker_color='#81c784'))
+    fig.add_trace(go.Bar(name='Querem Ler', x=generos_lidos['genero'], y=generos_lidos['querem_ler'], marker_color='#4caf50'))
     
     fig.update_layout(
         title='Top 15 Gêneros: Comportamento de Leitura',
@@ -779,11 +840,11 @@ def atualizar_metricas_leitura(genero, idioma, editora, ano_range):
     
    
     cores = {
-        'Leram': '#2ecc71',
-        'Lendo': '#1abc9c',
-        'Querem Ler': '#16a085',
-        'Abandonos': '#e74c3c',
-        'Relendo': '#27ae60'
+        'Leram': '#2e7d32',
+        'Lendo': '#388e3c',
+        'Querem Ler': '#4caf50',
+        'Abandonos': '#81c784',
+        'Relendo': '#66bb6a'
     }
     fig = go.Figure()
     for nome, valor in metricas.items():
