@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 from dash import Dash, html, dcc, Input, Output, callback
 import dash_bootstrap_components as dbc
+import dash
 import os
 
 
@@ -53,7 +54,7 @@ df_generos_exploded = df_generos_exploded[df_generos_exploded['genero'].isin(_va
 
 
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
 app.title = "Dashboard de Livros"
 
 # Adicionando estilos CSS customizados para fundo acinzentado claro
@@ -76,6 +77,35 @@ app.index_string = '''
             }
             .text-primary {
                 color: #2c3e50 !important;
+            }
+            .navigation-bar {
+                background-color: white;
+                border-radius: 10px;
+                padding: 10px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .nav-btn {
+                color: #2c3e50 !important;
+                background-color: transparent !important;
+                border: 1px solid #2c3e50 !important;
+                font-weight: 500;
+                border-radius: 8px;
+                transition: all 0.3s ease;
+                margin: 0 2px;
+            }
+            .nav-btn:hover {
+                background-color: #2c3e50 !important;
+                color: white !important;
+                transform: translateY(-2px);
+            }
+            .nav-btn-active {
+                background-color: #2c3e50 !important;
+                color: white !important;
+            }
+            .section-divider {
+                border-top: 3px solid #2c3e50;
+                margin: 30px 0 20px 0;
+                border-radius: 2px;
             }
         </style>
     </head>
@@ -118,6 +148,9 @@ def criar_card_kpi(titulo, valor, icone=""):
 
 app.layout = dbc.Container([
 
+    # Store para a seção ativa
+    dcc.Store(id='active-section', data='kpis'),
+
     dbc.Row([
         dbc.Col([
             html.H1("Dashboard de Análise de Livros", className="text-center mt-4 mb-4"),
@@ -125,12 +158,28 @@ app.layout = dbc.Container([
         ])
     ]),
     
+    # Barra de navegação das seções
+    dbc.Row([
+        dbc.Col([
+            dbc.Nav([
+                dbc.NavItem(dbc.Button("KPIs", id="nav-kpis", className="nav-btn nav-btn-active", n_clicks=0)),
+                dbc.NavItem(dbc.Button("Popularidade", id="nav-popularidade", className="nav-btn", n_clicks=0)),
+                dbc.NavItem(dbc.Button("Avaliação", id="nav-avaliacao", className="nav-btn", n_clicks=0)),
+                dbc.NavItem(dbc.Button("Gêneros", id="nav-generos", className="nav-btn", n_clicks=0)),
+                dbc.NavItem(dbc.Button("Idiomas", id="nav-idiomas", className="nav-btn", n_clicks=0)),
+                dbc.NavItem(dbc.Button("Leitura", id="nav-leitura", className="nav-btn", n_clicks=0)),
+                dbc.NavItem(dbc.Button("Público", id="nav-publico", className="nav-btn", n_clicks=0)),
+            ], pills=True, justified=True, className="mb-4 navigation-bar")
+        ])
+    ]),
+    
 
+    # KPIs - sempre visíveis
     dbc.Row([
         dbc.Col(html.Div(id='kpis-container'), width=12)
     ], className="mb-4"),
     
-
+    # Filtros - sempre visíveis
     dbc.Row([
         dbc.Col([
             html.Label("Filtrar por Gênero:"),
@@ -176,82 +225,8 @@ app.layout = dbc.Container([
         ], md=3)
     ], className="mb-4"),
     
-
-    dbc.Row([
-        dbc.Col([
-            html.H4("Análise de Popularidade", className="mt-3 mb-3"),
-        ])
-    ]),
-    dbc.Row([
-        dbc.Col([dcc.Graph(id='top-livros-lidos')], md=4),
-        dbc.Col([dcc.Graph(id='top-autores')], md=4),
-        dbc.Col([dcc.Graph(id='top-editoras')], md=4),
-    ], className="mb-4"),
-    dbc.Row([
-        dbc.Col([dcc.Graph(id='livros-por-ano')], md=12),
-    ], className="mb-4"),
-    
-
-    dbc.Row([
-        dbc.Col([
-            html.H4("Análise de Avaliação", className="mt-3 mb-3"),
-        ])
-    ]),
-    dbc.Row([
-        dbc.Col([dcc.Graph(id='dist-rating')], md=6),
-        dbc.Col([dcc.Graph(id='scatter-rating-avaliacoes')], md=6),
-    ], className="mb-4"),
-    dbc.Row([
-        dbc.Col([dcc.Graph(id='top-melhores-livros')], md=6),
-        dbc.Col([dcc.Graph(id='top-piores-livros')], md=6),
-    ], className="mb-4"),
-    
-
-    dbc.Row([
-        dbc.Col([
-            html.H4("Análise por Gênero Literário", className="mt-3 mb-3"),
-        ])
-    ]),
-    dbc.Row([
-        dbc.Col([dcc.Graph(id='dist-generos')], md=6),
-        dbc.Col([dcc.Graph(id='rating-por-genero')], md=6),
-    ], className="mb-4"),
-    dbc.Row([
-        dbc.Col([dcc.Graph(id='generos-mais-lidos')], md=12),
-    ], className="mb-4"),
-    
-
-    dbc.Row([
-        dbc.Col([
-            html.H4("Análise por Idioma", className="mt-3 mb-3"),
-        ])
-    ]),
-    dbc.Row([
-        dbc.Col([dcc.Graph(id='dist-idiomas')], md=6),
-        dbc.Col([dcc.Graph(id='rating-por-idioma')], md=6),
-    ], className="mb-4"),
-    
-
-    dbc.Row([
-        dbc.Col([
-            html.H4("Comportamento de Leitura", className="mt-3 mb-3"),
-        ])
-    ]),
-    dbc.Row([
-        dbc.Col([dcc.Graph(id='metricas-leitura')], md=6),
-        dbc.Col([dcc.Graph(id='taxa-abandono-genero')], md=6),
-    ], className="mb-4"),
-    
-
-    dbc.Row([
-        dbc.Col([
-            html.H4("Análise por Gênero do Público", className="mt-3 mb-3"),
-        ])
-    ]),
-    dbc.Row([
-        dbc.Col([dcc.Graph(id='leitores-genero')], md=6),
-        dbc.Col([dcc.Graph(id='generos-por-publico')], md=6),
-    ], className="mb-4"),
+    # Container para conteúdo dinâmico das seções
+    html.Div(id='dynamic-content'),
     
 
     dbc.Row([
@@ -264,6 +239,166 @@ app.layout = dbc.Container([
     
 ], fluid=True)
 
+
+# Callback para controlar a seção ativa
+@callback(
+    [Output('active-section', 'data'),
+     Output('nav-kpis', 'className'),
+     Output('nav-popularidade', 'className'),
+     Output('nav-avaliacao', 'className'),
+     Output('nav-generos', 'className'),
+     Output('nav-idiomas', 'className'),
+     Output('nav-leitura', 'className'),
+     Output('nav-publico', 'className')],
+    [Input('nav-kpis', 'n_clicks'),
+     Input('nav-popularidade', 'n_clicks'),
+     Input('nav-avaliacao', 'n_clicks'),
+     Input('nav-generos', 'n_clicks'),
+     Input('nav-idiomas', 'n_clicks'),
+     Input('nav-leitura', 'n_clicks'),
+     Input('nav-publico', 'n_clicks')],
+    prevent_initial_call=False
+)
+def update_active_section(kpis_clicks, pop_clicks, av_clicks, gen_clicks, idi_clicks, leit_clicks, pub_clicks):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return 'kpis', 'nav-btn nav-btn-active', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn'
+    
+    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    
+    classes = ['nav-btn'] * 7
+    section_map = {
+        'nav-kpis': (0, 'kpis'),
+        'nav-popularidade': (1, 'popularidade'),
+        'nav-avaliacao': (2, 'avaliacao'),
+        'nav-generos': (3, 'generos'),
+        'nav-idiomas': (4, 'idiomas'),
+        'nav-leitura': (5, 'leitura'),
+        'nav-publico': (6, 'publico')
+    }
+    
+    if button_id in section_map:
+        idx, section = section_map[button_id]
+        classes[idx] = 'nav-btn nav-btn-active'
+        return section, *classes
+    
+    return 'kpis', 'nav-btn nav-btn-active', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn'
+
+
+# Callback para atualizar conteúdo dinâmico
+@callback(
+    Output('dynamic-content', 'children'),
+    Input('active-section', 'data')
+)
+def update_dynamic_content(active_section):
+    if active_section == 'kpis':
+        return html.Div([
+            html.Hr(className="section-divider"),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Visão Geral dos KPIs", className="mt-3 mb-3 text-center"),
+                    html.P("Os indicadores principais estão sempre visíveis acima. Selecione uma categoria no menu para ver análises específicas.", 
+                           className="text-center text-muted")
+                ])
+            ])
+        ])
+    
+    elif active_section == 'popularidade':
+        return html.Div([
+            html.Hr(className="section-divider"),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Análise de Popularidade", className="mt-3 mb-3"),
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([dcc.Graph(id='top-livros-lidos')], md=4),
+                dbc.Col([dcc.Graph(id='top-autores')], md=4),
+                dbc.Col([dcc.Graph(id='top-editoras')], md=4),
+            ], className="mb-4"),
+            dbc.Row([
+                dbc.Col([dcc.Graph(id='livros-por-ano')], md=12),
+            ], className="mb-4")
+        ])
+    
+    elif active_section == 'avaliacao':
+        return html.Div([
+            html.Hr(className="section-divider"),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Análise de Avaliação", className="mt-3 mb-3"),
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([dcc.Graph(id='dist-rating')], md=6),
+                dbc.Col([dcc.Graph(id='scatter-rating-avaliacoes')], md=6),
+            ], className="mb-4"),
+            dbc.Row([
+                dbc.Col([dcc.Graph(id='top-melhores-livros')], md=6),
+                dbc.Col([dcc.Graph(id='top-piores-livros')], md=6),
+            ], className="mb-4")
+        ])
+    
+    elif active_section == 'generos':
+        return html.Div([
+            html.Hr(className="section-divider"),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Análise por Gênero Literário", className="mt-3 mb-3"),
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([dcc.Graph(id='dist-generos')], md=6),
+                dbc.Col([dcc.Graph(id='rating-por-genero')], md=6),
+            ], className="mb-4"),
+            dbc.Row([
+                dbc.Col([dcc.Graph(id='generos-mais-lidos')], md=12),
+            ], className="mb-4")
+        ])
+    
+    elif active_section == 'idiomas':
+        return html.Div([
+            html.Hr(className="section-divider"),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Análise por Idioma", className="mt-3 mb-3"),
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([dcc.Graph(id='dist-idiomas')], md=6),
+                dbc.Col([dcc.Graph(id='rating-por-idioma')], md=6),
+            ], className="mb-4")
+        ])
+    
+    elif active_section == 'leitura':
+        return html.Div([
+            html.Hr(className="section-divider"),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Comportamento de Leitura", className="mt-3 mb-3"),
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([dcc.Graph(id='metricas-leitura')], md=6),
+                dbc.Col([dcc.Graph(id='taxa-abandono-genero')], md=6),
+            ], className="mb-4")
+        ])
+    
+    elif active_section == 'publico':
+        return html.Div([
+            html.Hr(className="section-divider"),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Análise por Gênero do Público", className="mt-3 mb-3"),
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([dcc.Graph(id='leitores-genero')], md=6),
+                dbc.Col([dcc.Graph(id='generos-por-publico')], md=6),
+            ], className="mb-4")
+        ])
+    
+    return html.Div()
 
 
 @callback(
