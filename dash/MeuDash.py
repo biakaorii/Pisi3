@@ -80,13 +80,9 @@ app.index_string = '''
             .text-primary {
                 color: #2d5016 !important;
             }
-            /* Header com gradiente */
+            /* Header com cor preta */
             h1 {
-                background: linear-gradient(45deg, #388e3c 0%, #2e7d32 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-                color: transparent;
+                color: #000000 !important;
                 font-weight: 700;
             }
             /* Barra de navegação com gradiente */
@@ -190,6 +186,27 @@ app.index_string = '''
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
+            }
+            /* RangeSlider personalizado verde */
+            .rc-slider {
+                background-color: #e8f5e8 !important;
+            }
+            .rc-slider-track {
+                background-color: #4caf50 !important;
+            }
+            .rc-slider-handle {
+                border-color: #2e7d32 !important;
+                background-color: #4caf50 !important;
+            }
+            .rc-slider-handle:hover {
+                border-color: #1b5e20 !important;
+            }
+            .rc-slider-handle:focus {
+                border-color: #1b5e20 !important;
+                box-shadow: 0 0 0 5px rgba(76, 175, 80, 0.2) !important;
+            }
+            .rc-slider-dot-active {
+                border-color: #4caf50 !important;
             }
         </style>
     </head>
