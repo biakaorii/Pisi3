@@ -107,6 +107,29 @@ app.index_string = '''
                 margin: 30px 0 20px 0;
                 border-radius: 2px;
             }
+            /* Efeito hover para gráficos */
+            .graph-container {
+                transition: all 0.4s ease;
+                border-radius: 15px;
+                padding: 8px;
+                margin: 5px;
+                background-color: rgba(255, 255, 255, 0.8);
+                border: 2px solid transparent;
+            }
+            .graph-container:hover {
+                transform: scale(1.005);
+                box-shadow: 0 15px 35px rgba(44, 62, 80, 0.25);
+                background-color: white;
+                z-index: 20;
+                position: relative;
+                border: 2px solid #2c3e50;
+            }
+            .graph-row:hover .graph-container:not(:hover) {
+                transform: scale(0.98);
+            }
+            .plotly-graph-div {
+                border-radius: 10px;
+            }
         </style>
     </head>
     <body>
@@ -312,13 +335,13 @@ def update_dynamic_content(active_section):
                 ])
             ]),
             dbc.Row([
-                dbc.Col([dcc.Graph(id='top-livros-lidos')], md=4),
-                dbc.Col([dcc.Graph(id='top-autores')], md=4),
-                dbc.Col([dcc.Graph(id='top-editoras')], md=4),
-            ], className="mb-4"),
+                dbc.Col([html.Div([dcc.Graph(id='top-livros-lidos')], className="graph-container")], md=4),
+                dbc.Col([html.Div([dcc.Graph(id='top-autores')], className="graph-container")], md=4),
+                dbc.Col([html.Div([dcc.Graph(id='top-editoras')], className="graph-container")], md=4),
+            ], className="mb-4 graph-row"),
             dbc.Row([
-                dbc.Col([dcc.Graph(id='livros-por-ano')], md=12),
-            ], className="mb-4")
+                dbc.Col([html.Div([dcc.Graph(id='livros-por-ano')], className="graph-container")], md=12),
+            ], className="mb-4 graph-row")
         ])
     
     elif active_section == 'avaliacao':
@@ -330,13 +353,13 @@ def update_dynamic_content(active_section):
                 ])
             ]),
             dbc.Row([
-                dbc.Col([dcc.Graph(id='dist-rating')], md=6),
-                dbc.Col([dcc.Graph(id='scatter-rating-avaliacoes')], md=6),
-            ], className="mb-4"),
+                dbc.Col([html.Div([dcc.Graph(id='dist-rating')], className="graph-container")], md=6),
+                dbc.Col([html.Div([dcc.Graph(id='scatter-rating-avaliacoes')], className="graph-container")], md=6),
+            ], className="mb-4 graph-row"),
             dbc.Row([
-                dbc.Col([dcc.Graph(id='top-melhores-livros')], md=6),
-                dbc.Col([dcc.Graph(id='top-piores-livros')], md=6),
-            ], className="mb-4")
+                dbc.Col([html.Div([dcc.Graph(id='top-melhores-livros')], className="graph-container")], md=6),
+                dbc.Col([html.Div([dcc.Graph(id='top-piores-livros')], className="graph-container")], md=6),
+            ], className="mb-4 graph-row")
         ])
     
     elif active_section == 'generos':
@@ -348,12 +371,12 @@ def update_dynamic_content(active_section):
                 ])
             ]),
             dbc.Row([
-                dbc.Col([dcc.Graph(id='dist-generos')], md=6),
-                dbc.Col([dcc.Graph(id='rating-por-genero')], md=6),
-            ], className="mb-4"),
+                dbc.Col([html.Div([dcc.Graph(id='dist-generos')], className="graph-container")], md=6),
+                dbc.Col([html.Div([dcc.Graph(id='rating-por-genero')], className="graph-container")], md=6),
+            ], className="mb-4 graph-row"),
             dbc.Row([
-                dbc.Col([dcc.Graph(id='generos-mais-lidos')], md=12),
-            ], className="mb-4")
+                dbc.Col([html.Div([dcc.Graph(id='generos-mais-lidos')], className="graph-container")], md=12),
+            ], className="mb-4 graph-row")
         ])
     
     elif active_section == 'idiomas':
@@ -365,9 +388,9 @@ def update_dynamic_content(active_section):
                 ])
             ]),
             dbc.Row([
-                dbc.Col([dcc.Graph(id='dist-idiomas')], md=6),
-                dbc.Col([dcc.Graph(id='rating-por-idioma')], md=6),
-            ], className="mb-4")
+                dbc.Col([html.Div([dcc.Graph(id='dist-idiomas')], className="graph-container")], md=6),
+                dbc.Col([html.Div([dcc.Graph(id='rating-por-idioma')], className="graph-container")], md=6),
+            ], className="mb-4 graph-row")
         ])
     
     elif active_section == 'leitura':
@@ -379,9 +402,9 @@ def update_dynamic_content(active_section):
                 ])
             ]),
             dbc.Row([
-                dbc.Col([dcc.Graph(id='metricas-leitura')], md=6),
-                dbc.Col([dcc.Graph(id='taxa-abandono-genero')], md=6),
-            ], className="mb-4")
+                dbc.Col([html.Div([dcc.Graph(id='metricas-leitura')], className="graph-container")], md=6),
+                dbc.Col([html.Div([dcc.Graph(id='taxa-abandono-genero')], className="graph-container")], md=6),
+            ], className="mb-4 graph-row")
         ])
     
     elif active_section == 'publico':
@@ -393,9 +416,9 @@ def update_dynamic_content(active_section):
                 ])
             ]),
             dbc.Row([
-                dbc.Col([dcc.Graph(id='leitores-genero')], md=6),
-                dbc.Col([dcc.Graph(id='generos-por-publico')], md=6),
-            ], className="mb-4")
+                dbc.Col([html.Div([dcc.Graph(id='leitores-genero')], className="graph-container")], md=6),
+                dbc.Col([html.Div([dcc.Graph(id='generos-por-publico')], className="graph-container")], md=6),
+            ], className="mb-4 graph-row")
         ])
     
     return html.Div()
