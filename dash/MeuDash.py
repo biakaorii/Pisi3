@@ -68,7 +68,7 @@ app.index_string = '''
         {%css%}
         <style>
             body {
-                background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%) !important;
+                background: #f5f5f5 !important;
                 background-attachment: fixed;
                 margin: 0;
                 padding: 0;
@@ -85,34 +85,53 @@ app.index_string = '''
                 color: #000000 !important;
                 font-weight: 700;
             }
-            /* Barra de navegação com gradiente */
+            /* Barra de navegação moderna */
             .navigation-bar {
-                background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
-                border-radius: 15px;
-                padding: 15px;
-                box-shadow: 0 8px 32px rgba(76, 175, 80, 0.3);
-                backdrop-filter: blur(10px);
+                background: white;
+                border-radius: 20px;
+                padding: 12px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+                margin: 20px 0;
+                position: relative;
+                z-index: 100;
             }
             .nav-btn {
-                color: white !important;
-                background: rgba(255, 255, 255, 0.1) !important;
-                border: 1px solid rgba(255, 255, 255, 0.2) !important;
-                font-weight: 500;
-                border-radius: 10px;
-                transition: all 0.3s ease;
-                margin: 0 3px;
-                backdrop-filter: blur(10px);
+                color: #666 !important;
+                background: transparent !important;
+                border: none !important;
+                font-weight: 600;
+                border-radius: 12px;
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                margin: 0 4px;
+                padding: 12px 20px;
+                position: relative;
+                overflow: hidden;
+                font-size: 0.95rem;
+                letter-spacing: 0.3px;
             }
             .nav-btn:hover {
-                background: rgba(255, 255, 255, 0.2) !important;
-                color: white !important;
-                transform: translateY(-3px);
-                box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+                color: #333 !important;
+                background: rgba(0, 0, 0, 0.04) !important;
+                transform: translateY(-1px);
+            }
+            .nav-btn::before {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 50%;
+                width: 0;
+                height: 3px;
+                background: #4caf50;
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                transform: translateX(-50%);
+                border-radius: 4px;
             }
             .nav-btn-active {
-                background: rgba(255, 255, 255, 0.3) !important;
-                color: white !important;
-                box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+                color: #4caf50 !important;
+                background: rgba(76, 175, 80, 0.08) !important;
+            }
+            .nav-btn-active::before {
+                width: 80%;
             }
             /* KPI Cards com cores */
             .card {
@@ -133,6 +152,17 @@ app.index_string = '''
                 transform: translateY(-5px) !important;
                 box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15) !important;
             }
+            .card i {
+                font-size: 1.2rem;
+                opacity: 0.8;
+                width: 24px;
+                text-align: center;
+            }
+            .card:hover i {
+                opacity: 1;
+                transform: scale(1.1);
+                transition: all 0.3s ease;
+            }
             /* Section dividers com gradiente */
             .section-divider {
                 border: none;
@@ -151,6 +181,7 @@ app.index_string = '''
                 border: 2px solid transparent;
                 backdrop-filter: blur(10px);
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
             }
             .graph-container:hover {
                 transform: scale(1.005);
@@ -158,8 +189,26 @@ app.index_string = '''
                 background: rgba(255, 255, 255, 0.95);
                 z-index: 20;
                 position: relative;
-                border: 2px solid;
-                border-image: linear-gradient(45deg, #4caf50, #388e3c) 1;
+            }
+            .graph-container::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                border-radius: 15px;
+                padding: 2px;
+                background: linear-gradient(45deg, #4caf50, #388e3c);
+                -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                -webkit-mask-composite: xor;
+                mask-composite: exclude;
+                opacity: 0;
+                transition: opacity 0.4s ease;
+            }
+            .graph-container:hover::before {
+                opacity: 1;
             }
             .graph-row:hover .graph-container:not(:hover) {
                 transform: scale(0.98);
@@ -239,8 +288,11 @@ def criar_card_kpi(titulo, valor, icone=""):
     """Cria um card de KPI"""
     return dbc.Card(
         dbc.CardBody([
-            html.H6(f"{icone} {titulo}".strip(), className="text-muted"),
-            html.H3(valor, className="text-primary fw-bold")
+            html.Div([
+                html.I(className=f"fa {icone} me-2"),
+                html.Span(titulo)
+            ], className="text-muted d-flex align-items-center"),
+            html.H3(valor, className="text-primary fw-bold mt-2")
         ]),
         className="shadow-sm mb-3"
     )
@@ -250,11 +302,20 @@ def criar_card_kpi(titulo, valor, icone=""):
 app.layout = dbc.Container([
 
     # Store para a seção ativa
-    dcc.Store(id='active-section', data='kpis'),
+    dcc.Store(id='active-section', data='popularidade'),
+    
+    # Font Awesome CSS
+    html.Link(
+        rel="stylesheet",
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    ),
 
     dbc.Row([
         dbc.Col([
-            html.H1("Dashboard de Análise de Livros", className="text-center mt-4 mb-4"),
+            html.H1([
+                html.I(className="fas fa-book me-2"),
+                "Dashboard de Análise de Livros"
+            ], className="text-center mt-4 mb-4"),
             html.Hr()
         ])
     ]),
@@ -263,8 +324,7 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             dbc.Nav([
-                dbc.NavItem(dbc.Button("KPIs", id="nav-kpis", className="nav-btn nav-btn-active", n_clicks=0)),
-                dbc.NavItem(dbc.Button("Popularidade", id="nav-popularidade", className="nav-btn", n_clicks=0)),
+                dbc.NavItem(dbc.Button("Popularidade", id="nav-popularidade", className="nav-btn nav-btn-active", n_clicks=0)),
                 dbc.NavItem(dbc.Button("Avaliação", id="nav-avaliacao", className="nav-btn", n_clicks=0)),
                 dbc.NavItem(dbc.Button("Gêneros", id="nav-generos", className="nav-btn", n_clicks=0)),
                 dbc.NavItem(dbc.Button("Idiomas", id="nav-idiomas", className="nav-btn", n_clicks=0)),
@@ -344,15 +404,13 @@ app.layout = dbc.Container([
 # Callback para controlar a seção ativa
 @callback(
     [Output('active-section', 'data'),
-     Output('nav-kpis', 'className'),
      Output('nav-popularidade', 'className'),
      Output('nav-avaliacao', 'className'),
      Output('nav-generos', 'className'),
      Output('nav-idiomas', 'className'),
      Output('nav-leitura', 'className'),
      Output('nav-publico', 'className')],
-    [Input('nav-kpis', 'n_clicks'),
-     Input('nav-popularidade', 'n_clicks'),
+    [Input('nav-popularidade', 'n_clicks'),
      Input('nav-avaliacao', 'n_clicks'),
      Input('nav-generos', 'n_clicks'),
      Input('nav-idiomas', 'n_clicks'),
@@ -360,22 +418,21 @@ app.layout = dbc.Container([
      Input('nav-publico', 'n_clicks')],
     prevent_initial_call=False
 )
-def update_active_section(kpis_clicks, pop_clicks, av_clicks, gen_clicks, idi_clicks, leit_clicks, pub_clicks):
+def update_active_section(pop_clicks, av_clicks, gen_clicks, idi_clicks, leit_clicks, pub_clicks):
     ctx = dash.callback_context
     if not ctx.triggered:
-        return 'kpis', 'nav-btn nav-btn-active', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn'
+        return 'popularidade', 'nav-btn nav-btn-active', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn'
     
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     
-    classes = ['nav-btn'] * 7
+    classes = ['nav-btn'] * 6
     section_map = {
-        'nav-kpis': (0, 'kpis'),
-        'nav-popularidade': (1, 'popularidade'),
-        'nav-avaliacao': (2, 'avaliacao'),
-        'nav-generos': (3, 'generos'),
-        'nav-idiomas': (4, 'idiomas'),
-        'nav-leitura': (5, 'leitura'),
-        'nav-publico': (6, 'publico')
+        'nav-popularidade': (0, 'popularidade'),
+        'nav-avaliacao': (1, 'avaliacao'),
+        'nav-generos': (2, 'generos'),
+        'nav-idiomas': (3, 'idiomas'),
+        'nav-leitura': (4, 'leitura'),
+        'nav-publico': (5, 'publico')
     }
     
     if button_id in section_map:
@@ -383,7 +440,7 @@ def update_active_section(kpis_clicks, pop_clicks, av_clicks, gen_clicks, idi_cl
         classes[idx] = 'nav-btn nav-btn-active'
         return section, *classes
     
-    return 'kpis', 'nav-btn nav-btn-active', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn'
+    return 'popularidade', 'nav-btn nav-btn-active', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn'
 
 
 # Callback para atualizar conteúdo dinâmico
@@ -392,19 +449,7 @@ def update_active_section(kpis_clicks, pop_clicks, av_clicks, gen_clicks, idi_cl
     Input('active-section', 'data')
 )
 def update_dynamic_content(active_section):
-    if active_section == 'kpis':
-        return html.Div([
-            html.Hr(className="section-divider"),
-            dbc.Row([
-                dbc.Col([
-                    html.H4("Visão Geral dos KPIs", className="mt-3 mb-3 text-center"),
-                    html.P("Os indicadores principais estão sempre visíveis acima. Selecione uma categoria no menu para ver análises específicas.", 
-                           className="text-center text-muted")
-                ])
-            ])
-        ])
-    
-    elif active_section == 'popularidade':
+    if active_section == 'popularidade':
         return html.Div([
             html.Hr(className="section-divider"),
             dbc.Row([
@@ -520,11 +565,11 @@ def atualizar_kpis(genero, idioma, editora, ano_range):
     }
     
     return dbc.Row([
-        dbc.Col(criar_card_kpi("Total de Livros", f"{kpis['total_livros']:,}", ""), md=2),
-        dbc.Col(criar_card_kpi("Total de Autores", f"{kpis['total_autores']:,}", ""), md=2),
-        dbc.Col(criar_card_kpi("Total de Editoras", f"{kpis['total_editoras']:,}", ""), md=2),
-        dbc.Col(criar_card_kpi("Rating Médio", f"{kpis['media_rating']:.2f}", ""), md=3),
-        dbc.Col(criar_card_kpi("Total de Resenhas", f"{kpis['total_resenhas']:,}", ""), md=3),
+        dbc.Col(criar_card_kpi("Total de Livros", f"{kpis['total_livros']:,}", "fas fa-book"), md=2),
+        dbc.Col(criar_card_kpi("Total de Autores", f"{kpis['total_autores']:,}", "fas fa-users"), md=2),
+        dbc.Col(criar_card_kpi("Total de Editoras", f"{kpis['total_editoras']:,}", "fas fa-building"), md=2),
+        dbc.Col(criar_card_kpi("Rating Médio", f"{kpis['media_rating']:.2f}", "fas fa-star"), md=3),
+        dbc.Col(criar_card_kpi("Total de Resenhas", f"{kpis['total_resenhas']:,}", "fas fa-comments"), md=3),
     ])
 
 def filtrar_dados(genero, idioma, editora, ano_range):
