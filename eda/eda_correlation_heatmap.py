@@ -61,6 +61,8 @@ def plotar_heatmap(corr: pd.DataFrame, saida: Path, titulo: str = 'Correlação 
         linewidths=0.5,
         cbar_kws={'shrink': 0.8},
     )
+    # Inclinar rótulos do eixo X para melhor leitura
+    plt.xticks(rotation=45, ha='right')
     plt.title(titulo)
     plt.tight_layout()
     plt.savefig(saida, dpi=200)
@@ -85,4 +87,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
