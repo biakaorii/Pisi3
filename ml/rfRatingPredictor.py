@@ -69,6 +69,40 @@ ap = average_precision_score(y_teste, y_proba)
 print(f"ROC-AUC: {auc:.4f}")
 print(f"Average Precision (PR-AUC): {ap:.4f}")
 
+# Importâncias das features (sem plot) — tenta extrair do RF dentro do calibrador
+def _get_feature_importances_from_model(m, n_features):
+    import numpy as _np
+    # Caso 1: o próprio modelo exponha (não comum em CalibratedClassifierCV)
+    if hasattr(m, "feature_importances_"):
+        return _np.asarray(getattr(m, "feature_importances_"))
+    # Caso 2: base_estimator_ dentro do calibrador
+    base = getattr(m, "base_estimator_", None)
+    if base is not None and hasattr(base, "feature_importances_"):
+        return _np.asarray(base.feature_importances_)
+    # Caso 3: média das importâncias dos estimadores calibrados por fold
+    imps = []
+    for cc in getattr(m, "calibrated_classifiers_", []) or []:
+        cand = (
+            getattr(cc, "base_estimator", None)
+            or getattr(cc, "estimator", None)
+            or getattr(cc, "base_estimator_", None)
+        )
+        if cand is not None and hasattr(cand, "feature_importances_"):
+            arr = _np.asarray(getattr(cand, "feature_importances_"))
+            if arr.shape[0] == n_features:
+                imps.append(arr)
+    if imps:
+        return _np.mean(_np.vstack(imps), axis=0)
+    return None
+
+importances = _get_feature_importances_from_model(modelo, X_treino.shape[1])
+if importances is not None and importances.shape[0] == X_treino.shape[1]:
+    fi_series = pd.Series(importances, index=X_treino.columns).sort_values(ascending=False)
+    print("\nTop 20 Feature Importances (RandomForest):")
+    print(fi_series.head(20).to_string())
+else:
+    print("\n[aviso] Não foi possível obter feature_importances_ diretamente do modelo calibrado.")
+
 # Plotar Matriz de Confusão
 plt.figure(figsize=(5, 4))
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
