@@ -48,7 +48,7 @@ X_treino, X_teste, y_treino, y_teste = train_test_split(X, y, test_size = 0.2, r
 
 # Treinamento com calibração de probabilidade (Platt/sigmoid)
 base_model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced')
-modelo = CalibratedClassifierCV(base_estimator=base_model, method='sigmoid', cv=5)
+modelo = CalibratedClassifierCV(estimator=base_model, method='sigmoid', cv=5)
 modelo.fit(X_treino, y_treino)
 
 #Predicoes e metricas de avaliacao
@@ -75,16 +75,18 @@ def _get_feature_importances_from_model(m, n_features):
     # Caso 1: o próprio modelo exponha (não comum em CalibratedClassifierCV)
     if hasattr(m, "feature_importances_"):
         return _np.asarray(getattr(m, "feature_importances_"))
-    # Caso 2: base_estimator_ dentro do calibrador
-    base = getattr(m, "base_estimator_", None)
-    if base is not None and hasattr(base, "feature_importances_"):
-        return _np.asarray(base.feature_importances_)
+    # Caso 2: estimator_/base_estimator_ dentro do calibrador
+    for attr in ("estimator_", "base_estimator_"):
+        base = getattr(m, attr, None)
+        if base is not None and hasattr(base, "feature_importances_"):
+            return _np.asarray(base.feature_importances_)
     # Caso 3: média das importâncias dos estimadores calibrados por fold
     imps = []
     for cc in getattr(m, "calibrated_classifiers_", []) or []:
         cand = (
-            getattr(cc, "base_estimator", None)
-            or getattr(cc, "estimator", None)
+            getattr(cc, "estimator", None)
+            or getattr(cc, "base_estimator", None)
+            or getattr(cc, "estimator_", None)
             or getattr(cc, "base_estimator_", None)
         )
         if cand is not None and hasattr(cand, "feature_importances_"):
