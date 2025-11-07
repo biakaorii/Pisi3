@@ -23,9 +23,11 @@ df['popularidade'] = np.where(df['rating'] >= 4.0, 1, 0)
 #Criando uma nova feature derivada de abandono
 df['taxa_abandono'] = df['abandonos'] / df['leram']
 df['taxa_avaliacao'] = df['avaliacao'] / df['leram']
+# Tratar divisões por zero/valores inválidos apenas para a nova feature
+df['taxa_avaliacao'] = df['taxa_avaliacao'].replace([np.inf, -np.inf], np.nan).fillna(0)
 
 #Features e variavel alvo
-features = ['ano', 'paginas', 'leram', 'querem_ler', 'autor', 'taxa_abandono', 'relendo', 'avaliacao', 'resenha']
+features = ['ano', 'paginas', 'leram', 'querem_ler', 'autor', 'taxa_abandono', 'taxa_avaliacao', 'relendo', 'avaliacao', 'resenha']
 X = df[features]
 y = df['popularidade']
 
