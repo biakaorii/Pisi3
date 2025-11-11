@@ -1,6 +1,3 @@
-"""
-EDA: Análise de distribuição por gênero e viés de gênero entre leitores
-"""
 import os
 from pathlib import Path
 import pandas as pd
