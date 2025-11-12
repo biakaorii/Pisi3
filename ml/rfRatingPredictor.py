@@ -29,19 +29,14 @@ df = df[df['avaliacao'] >= 25].copy()
 #Criar a coluna de popularidade, 1 para Popular e 0 para Impopular
 df['popularidade'] = np.where(df['rating'] >= 4.0, 1, 0)
 
-#Criando uma nova feature derivada de abandono
-df['taxa_abandono'] = df['abandonos'] / df['leram']
-df['taxa_avaliacao'] = df['avaliacao'] / df['leram']
-# Tratar divisões por zero/valores inválidos apenas para a nova feature
-df['taxa_avaliacao'] = df['taxa_avaliacao'].replace([np.inf, -np.inf], np.nan).fillna(0)
 
 #Features e variavel alvo
-features = ['ano', 'paginas', 'leram', 'querem_ler', 'autor', 'taxa_abandono', 'taxa_avaliacao', 'relendo', 'avaliacao', 'resenha']
+features = ['ano', 'paginas', 'querem_ler', 'autor', "editora"]
 X = df[features]
 y = df['popularidade']
 
 #One-hot encoding para a coluna 'autor'
-X = pd.get_dummies(X, columns=['autor'], drop_first=True)
+X = pd.get_dummies(X, columns=['autor', 'editora'], drop_first=True)
 
 # Dividir os dados em conjunto de treino e teste balanceando as classes
 X_treino, X_teste, y_treino, y_teste = train_test_split(X, y, test_size = 0.2, random_state=42, stratify=y)
