@@ -1,4 +1,4 @@
-from sklearn.ensemble import RandomForestClassifier
+from lightgbm import LGBMClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     classification_report,
@@ -34,11 +34,14 @@ y = df['popularidade']
 #One-hot encoding para a coluna 'autor'
 X = pd.get_dummies(X, columns=['autor', 'editora'], drop_first=True)
 
+# Limpar nomes das colunas para LightGBM (remover caracteres especiais)
+X.columns = X.columns.str.replace('[', '_', regex=False).str.replace(']', '_', regex=False).str.replace('"', '', regex=False).str.replace(':', '_', regex=False).str.replace(',', '_', regex=False).str.replace('{', '_', regex=False).str.replace('}', '_', regex=False)
+
 # Dividir os dados em conjunto de treino e teste balanceando as classes
 X_treino, X_teste, y_treino, y_teste = train_test_split(X, y, test_size = 0.2, random_state=42, stratify=y)
 
 # Treinamento com calibração de probabilidade (Platt/sigmoid)
-base_model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced')
+base_model = LGBMClassifier(n_estimators=100, random_state=42, class_weight='balanced', verbose=-1)
 modelo = CalibratedClassifierCV(estimator=base_model, method='sigmoid', cv=5)
 modelo.fit(X_treino, y_treino)
 
@@ -48,13 +51,13 @@ y_pred_treino = modelo.predict(X_treino)
 
 # ========== FEATURE IMPORTANCE GERAL ==========
 # Treinar modelo sem calibração para obter feature importance
-rf_model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced')
-rf_model.fit(X_treino, y_treino)
+lgbm_model = LGBMClassifier(n_estimators=100, random_state=42, class_weight='balanced', verbose=-1)
+lgbm_model.fit(X_treino, y_treino)
 
 # Feature importance
 feature_importance = pd.DataFrame({
     'feature': X_treino.columns,
-    'importance': rf_model.feature_importances_
+    'importance': lgbm_model.feature_importances_
 }).sort_values('importance', ascending=False)
 
 print("="*80)
@@ -124,6 +127,3 @@ print("CLASSIFICATION REPORT - TESTE")
 print("="*80)
 print(classification_report(y_teste, y_pred, 
                           target_names=['Impopular', 'Popular']))
-
-
-

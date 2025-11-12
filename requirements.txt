@@ -31,6 +31,7 @@ joblib==1.5.2
 jupyter_client==8.6.3
 jupyter_core==5.8.1
 kiwisolver==1.4.9
+lightgbm==4.6.0
 llvmlite==0.44.0
 MarkupSafe==3.0.3
 matplotlib==3.10.0
@@ -62,6 +63,7 @@ pyparsing==3.2.5
 python-dateutil==2.9.0.post0
 pytz==2025.2
 PyWavelets==1.8.0
+pywin32==311
 PyYAML==6.0.3
 pyzmq==27.1.0
 requests==2.32.5
@@ -69,6 +71,7 @@ retrying==1.4.2
 scikit-learn==1.7.2
 scipy==1.15.3
 seaborn==0.13.2
+setuptools==80.9.0
 six==1.17.0
 stack-data==0.6.3
 statsmodels==0.14.5
