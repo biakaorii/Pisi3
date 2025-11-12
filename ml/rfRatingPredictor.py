@@ -1,20 +1,16 @@
-from  sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     classification_report,
     confusion_matrix,
     roc_auc_score,
     balanced_accuracy_score,
-    RocCurveDisplay,
-    PrecisionRecallDisplay,
-    average_precision_score,
 )
-from sklearn.calibration import CalibratedClassifierCV, CalibrationDisplay
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.tree import DecisionTreeClassifier
 import pandas as pd
 import numpy as np
 import os
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 #Encontrar o caminho do dataset
 caminho_atual = os.path.dirname(os.path.abspath(__file__))
@@ -46,80 +42,68 @@ base_model = RandomForestClassifier(n_estimators=100, random_state=42, class_wei
 modelo = CalibratedClassifierCV(estimator=base_model, method='sigmoid', cv=5)
 modelo.fit(X_treino, y_treino)
 
-#Predicoes e metricas de avaliacao
+# Predições
 y_pred = modelo.predict(X_teste)
-y_proba = modelo.predict_proba(X_teste)[:, 1]
 
-print("Classification Report:")
-print(classification_report(y_teste, y_pred, digits=4))
+# ========== FEATURE IMPORTANCE GERAL ==========
+# Treinar modelo sem calibração para obter feature importance
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced')
+rf_model.fit(X_treino, y_treino)
 
+# Feature importance
+feature_importance = pd.DataFrame({
+    'feature': X_treino.columns,
+    'importance': rf_model.feature_importances_
+}).sort_values('importance', ascending=False)
+
+print("="*80)
+print("FEATURE IMPORTANCE GERAL")
+print("="*80)
+print(feature_importance.head(30).to_string(index=False))
+print("\n")
+
+# ========== FEATURE IMPORTANCE POR CLASSE ==========
+
+print("="*80)
+print("FEATURE IMPORTANCE POR CLASSE")
+print("="*80)
+
+for classe in [0, 1]:
+    # Criar um classificador binário para cada classe
+    y_binary = (y_treino == classe).astype(int)
+    dt_model = DecisionTreeClassifier(max_depth=10, random_state=42, class_weight='balanced')
+    dt_model.fit(X_treino, y_binary)
+    
+    # Feature importance para esta classe
+    class_importance = pd.DataFrame({
+        'feature': X_treino.columns,
+        'importance': dt_model.feature_importances_
+    }).sort_values('importance', ascending=False).head(20)
+    
+    classe_nome = 'Impopular (rating < 4.0)' if classe == 0 else 'Popular (rating >= 4.0)'
+    print(f"\nClasse {classe} - {classe_nome}:")
+    print("-"*80)
+    print(class_importance.to_string(index=False))
+    print("\n")
+
+# ========== MATRIZ DE CONFUSÃO ==========
 cm = confusion_matrix(y_teste, y_pred)
-print("Confusion Matrix:\n", cm)
 
-bal_acc = balanced_accuracy_score(y_teste, y_pred)
-print(f"Balanced Accuracy: {bal_acc:.4f}")
+print("="*80)
+print("MATRIZ DE CONFUSÃO")
+print("="*80)
+print("\n                 Predito")
+print("              Impopular  Popular")
+print(f"Real Impopular    {cm[0,0]:5d}     {cm[0,1]:5d}")
+print(f"     Popular      {cm[1,0]:5d}     {cm[1,1]:5d}")
+print("\n")
 
-auc = roc_auc_score(y_teste, y_proba)
-ap = average_precision_score(y_teste, y_proba)
-print(f"ROC-AUC: {auc:.4f}")
-print(f"Average Precision (PR-AUC): {ap:.4f}")
+# ========== CLASSIFICATION REPORT ==========
+print("="*80)
+print("CLASSIFICATION REPORT")
+print("="*80)
+print(classification_report(y_teste, y_pred, 
+                          target_names=['Impopular', 'Popular']))
 
-# Importâncias das features (sem plot) — tenta extrair do RF dentro do calibrador
-def _get_feature_importances_from_model(m, n_features):
-    import numpy as _np
-    # Caso 1: o próprio modelo exponha (não comum em CalibratedClassifierCV)
-    if hasattr(m, "feature_importances_"):
-        return _np.asarray(getattr(m, "feature_importances_"))
-    # Caso 2: estimator_/base_estimator_ dentro do calibrador
-    for attr in ("estimator_", "base_estimator_"):
-        base = getattr(m, attr, None)
-        if base is not None and hasattr(base, "feature_importances_"):
-            return _np.asarray(base.feature_importances_)
-    # Caso 3: média das importâncias dos estimadores calibrados por fold
-    imps = []
-    for cc in getattr(m, "calibrated_classifiers_", []) or []:
-        cand = (
-            getattr(cc, "estimator", None)
-            or getattr(cc, "base_estimator", None)
-            or getattr(cc, "estimator_", None)
-            or getattr(cc, "base_estimator_", None)
-        )
-        if cand is not None and hasattr(cand, "feature_importances_"):
-            arr = _np.asarray(getattr(cand, "feature_importances_"))
-            if arr.shape[0] == n_features:
-                imps.append(arr)
-    if imps:
-        return _np.mean(_np.vstack(imps), axis=0)
-    return None
 
-importances = _get_feature_importances_from_model(modelo, X_treino.shape[1])
-if importances is not None and importances.shape[0] == X_treino.shape[1]:
-    fi_series = pd.Series(importances, index=X_treino.columns).sort_values(ascending=False)
-    print("\nTop 20 Feature Importances (RandomForest):")
-    print(fi_series.head(20).to_string())
-else:
-    print("\n[aviso] Não foi possível obter feature_importances_ diretamente do modelo calibrado.")
 
-# Plotar Matriz de Confusão
-plt.figure(figsize=(5, 4))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-plt.title("Matriz de Confusão")
-plt.xlabel("Previsto")
-plt.ylabel("Real")
-plt.tight_layout()
-plt.show()
-
-# Curva ROC
-RocCurveDisplay.from_estimator(modelo, X_teste, y_teste)
-plt.title(f"Curva ROC (AUC = {auc:.3f})")
-plt.show()
-
-# Curva Precisão-Recall
-PrecisionRecallDisplay.from_predictions(y_teste, y_proba)
-plt.title(f"Curva Precisão-Recall (AP = {ap:.3f})")
-plt.show()
-
-# Curva de Calibração (reliability)
-CalibrationDisplay.from_estimator(modelo, X_teste, y_teste, n_bins=10, strategy='uniform')
-plt.title("Curva de Calibração (10 bins)")
-plt.show()
