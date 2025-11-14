@@ -48,7 +48,9 @@ y_pred_treino = modelo.predict(X_treino)
 
 # ========== FEATURE IMPORTANCE GERAL ==========
 # Treinar modelo sem calibração para obter feature importance
-rf_model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced')
+rf_model = RandomForestClassifier(n_estimators=200, min_samples_leaf = 1, min_samples_split=5, 
+                                max_features = 'log2', max_depth = None, bootstrap = False, 
+                                random_state=42, class_weight='balanced')
 rf_model.fit(X_treino, y_treino)
 
 # Feature importance
