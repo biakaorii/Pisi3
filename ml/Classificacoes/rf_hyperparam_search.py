@@ -9,7 +9,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 
 # Encontrar o caminho do dataset
 caminho_atual = os.path.dirname(os.path.abspath(__file__))
-caminho_dataset = os.path.join(caminho_atual, '..', 'dataset', 'dados.parquet')
+caminho_dataset = os.path.join(caminho_atual, '..', '..', 'dataset', 'dados.parquet')
 
 # Carregar o dataset
 df = pd.read_parquet(caminho_dataset)
