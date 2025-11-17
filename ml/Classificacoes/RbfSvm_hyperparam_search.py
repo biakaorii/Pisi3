@@ -4,10 +4,11 @@ import joblib
 import pandas as pd
 import numpy as np
 from sklearn.svm import SVC
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold, train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
-from scipy.stats import uniform, loguniform
+from scipy.stats import loguniform
 
 # Encontrar o caminho do dataset
 caminho_atual = os.path.dirname(os.path.abspath(__file__))
@@ -35,36 +36,36 @@ X_treino, X_teste, y_treino, y_teste = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
 
-# Normalização dos dados (FUNDAMENTAL para SVM)
-scaler = StandardScaler()
-X_treino_scaled = scaler.fit_transform(X_treino)
-X_teste_scaled = scaler.transform(X_teste)
-
 print("="*80)
 print("INICIANDO RANDOMIZED SEARCH PARA SVM com kernel RBF")
 print("="*80)
 
-# Espaço de busca (valores razoáveis para SVM com RBF)
+# Pipeline com scaler dentro do CV para evitar vazamento
+pipeline = Pipeline([
+    ('scaler', StandardScaler(with_mean=False)),  # with_mean=False evita problemas com matrizes esparsas/categorias
+    ('svm', SVC(
+        kernel='rbf',
+        class_weight='balanced',
+        random_state=42,
+        max_iter=50000,
+    ))
+])
+
+# Espaço de busca (valores razoáveis e limitados para melhor convergência)
 param_dist = {
-    'C': loguniform(0.01, 100),           # Regularização (log-uniform entre 0.01 e 100)
-    'gamma': ['scale', 'auto'] + list(loguniform(0.001, 10).rvs(10)),  # Parâmetro do kernel RBF
-    'kernel': ['rbf'],                     # Fixo em RBF
-    'shrinking': [True, False],           # Usar heurística de shrinking
-    'tol': [1e-3, 1e-4, 1e-5],           # Tolerância para critério de parada
+    'svm__C': loguniform(1e-2, 1e3),           # Regularização (log-uniform entre 0.01 e 1000)
+    'svm__gamma': loguniform(1e-4, 1.0),        # Parâmetro do kernel RBF
+    'svm__shrinking': [True],                   # Shrinking acelera convergência (mantemos ligado)
+    'svm__tol': [1e-3, 5e-4, 1e-4],             # Tolerância para critério de parada
 }
 
 # Configurar o RandomizedSearchCV
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-base_svm = SVC(
-    class_weight='balanced',
-    random_state=42,
-    max_iter=3000  # Limite de iterações para evitar treinos muito longos
-)
 
 rs = RandomizedSearchCV(
-    estimator=base_svm,
+    estimator=pipeline,
     param_distributions=param_dist,
-    n_iter=25,  # Número de combinações a testar
+    n_iter=40,  # Número de combinações a testar
     scoring='f1_macro',
     cv=cv,
     verbose=2,
@@ -75,7 +76,7 @@ rs = RandomizedSearchCV(
 
 # Rodar busca
 print("\nIniciando busca... (pode demorar alguns minutos)")
-rs.fit(X_treino_scaled, y_treino)
+rs.fit(X_treino, y_treino)
 
 best = rs.best_estimator_
 best_params = rs.best_params_
@@ -87,8 +88,8 @@ print("="*80)
 print(json.dumps(best_params, indent=2, default=str))
 print(f"Best CV score (f1_macro): {best_score:.4f}")
 
-# Avaliar no conjunto de teste
-y_pred = best.predict(X_teste_scaled)
+# Avaliar no conjunto de teste (pipeline cuida do scaler)
+y_pred = best.predict(X_teste)
 
 print("\n" + "="*80)
 print("CLASSIFICATION REPORT - TESTE")
