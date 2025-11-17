@@ -45,11 +45,15 @@ scale_pos_weight = (y_treino == 0).sum() / (y_treino == 1).sum()
 
 # Treinamento com calibração de probabilidade (Platt/sigmoid)
 base_model = XGBClassifier(
-    n_estimators=100,
-    max_depth=6,
-    learning_rate=0.1,
-    subsample=0.8,
-    colsample_bytree=0.8,
+    n_estimators=500,
+    max_depth=10,
+    learning_rate=0.01,
+    subsample=0.6,
+    colsample_bytree=1.0,
+    gamma=0.1,
+    reg_alpha=0,
+    reg_lambda=1,
+    min_child_weight=1,
     scale_pos_weight=scale_pos_weight,
     random_state=42,
     eval_metric='logloss',
@@ -65,11 +69,15 @@ y_pred_treino = modelo.predict(X_treino)
 # ========== FEATURE IMPORTANCE GERAL ==========
 # Treinar modelo sem calibração para obter feature importance
 xgb_model = XGBClassifier(
-    n_estimators=100,
-    max_depth=6,
-    learning_rate=0.1,
-    subsample=0.8,
-    colsample_bytree=0.8,
+    n_estimators=500,
+    max_depth=10,
+    learning_rate=0.01,
+    subsample=0.6,
+    colsample_bytree=1.0,
+    gamma=0.1,
+    reg_alpha=0,
+    reg_lambda=1,
+    min_child_weight=1,
     scale_pos_weight=scale_pos_weight,
     random_state=42,
     eval_metric='logloss',

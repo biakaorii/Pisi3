@@ -44,7 +44,15 @@ X_treino_scaled = scaler.fit_transform(X_treino)
 X_teste_scaled = scaler.transform(X_teste)
 
 # Treinamento com calibração de probabilidade (Platt/sigmoid)
-base_model = SVC(kernel='rbf', C=1.0, gamma='scale', random_state=42, class_weight='balanced')
+base_model = SVC(
+    kernel='rbf',
+    C=406.79084943595393,
+    gamma=0.00022592797420156976,
+    shrinking=True,
+    tol=0.0001,
+    random_state=42,
+    class_weight='balanced'
+)
 modelo = CalibratedClassifierCV(estimator=base_model, method='sigmoid', cv=5)
 modelo.fit(X_treino_scaled, y_treino)
 
