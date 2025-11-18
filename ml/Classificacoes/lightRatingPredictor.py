@@ -41,7 +41,20 @@ X.columns = X.columns.str.replace('[', '_', regex=False).str.replace(']', '_', r
 X_treino, X_teste, y_treino, y_teste = train_test_split(X, y, test_size = 0.2, random_state=42, stratify=y)
 
 # Treinamento com calibração de probabilidade (Platt/sigmoid)
-base_model = LGBMClassifier(n_estimators=100, random_state=42, class_weight='balanced', verbose=-1)
+base_model = LGBMClassifier(
+    n_estimators=300,
+    max_depth=6,
+    learning_rate=0.1,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    reg_alpha=0.1,
+    reg_lambda=1.5,
+    num_leaves=100,
+    min_child_samples=10,
+    random_state=42,
+    class_weight='balanced',
+    verbose=-1
+)
 modelo = CalibratedClassifierCV(estimator=base_model, method='sigmoid', cv=5)
 modelo.fit(X_treino, y_treino)
 
@@ -51,7 +64,20 @@ y_pred_treino = modelo.predict(X_treino)
 
 # ========== FEATURE IMPORTANCE GERAL ==========
 # Treinar modelo sem calibração para obter feature importance
-lgbm_model = LGBMClassifier(n_estimators=100, random_state=42, class_weight='balanced', verbose=-1)
+lgbm_model = LGBMClassifier(
+    n_estimators=300,
+    max_depth=6,
+    learning_rate=0.1,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    reg_alpha=0.1,
+    reg_lambda=1.5,
+    num_leaves=100,
+    min_child_samples=10,
+    random_state=42,
+    class_weight='balanced',
+    verbose=-1
+)
 lgbm_model.fit(X_treino, y_treino)
 
 # Feature importance

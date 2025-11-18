@@ -38,7 +38,16 @@ X = pd.get_dummies(X, columns=['autor', 'editora'], drop_first=True)
 X_treino, X_teste, y_treino, y_teste = train_test_split(X, y, test_size = 0.2, random_state=42, stratify=y)
 
 # Treinamento com calibração de probabilidade (Platt/sigmoid)
-base_model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced')
+base_model = RandomForestClassifier(
+    n_estimators=200,
+    max_depth=None,
+    min_samples_split=5,
+    min_samples_leaf=1,
+    max_features='log2',
+    bootstrap=False,
+    random_state=42,
+    class_weight='balanced'
+)
 modelo = CalibratedClassifierCV(estimator=base_model, method='sigmoid', cv=5)
 modelo.fit(X_treino, y_treino)
 
