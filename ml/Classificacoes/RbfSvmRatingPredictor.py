@@ -26,14 +26,35 @@ df = df[df['avaliacao'] >= 25].copy()
 #Criar a coluna de popularidade, 1 para Popular e 0 para Impopular
 df['popularidade'] = np.where(df['rating'] >= 4.0, 1, 0)
 
+#Criar features de GeneroPrimario e SubGenero a partir da coluna genero
+def extrair_genero_primario(genero_str):
+    if pd.isna(genero_str) or genero_str == 'Desconhecido':
+        return 'Desconhecido'
+    partes = str(genero_str).split('/')
+    if len(partes) > 0:
+        return partes[0].strip()
+    return 'Desconhecido'
+
+def extrair_subgenero(genero_str):
+    if pd.isna(genero_str) or genero_str == 'Desconhecido':
+        return 'Desconhecido'
+    partes = str(genero_str).split('/')
+    if len(partes) > 1:
+        return partes[1].strip()
+    return 'Desconhecido'
+
+df['GeneroPrimario'] = df['genero'].apply(extrair_genero_primario)
+df['SubGenero'] = df['genero'].apply(extrair_subgenero)
 
 #Features e variavel alvo
-features = ['ano', 'paginas', 'querem_ler', 'autor', "editora"]
+features = ['ano', 'paginas', 'querem_ler', 'autor', "editora", 'GeneroPrimario', 'SubGenero']
 X = df[features]
 y = df['popularidade']
 
-#One-hot encoding para a coluna 'autor'
-X = pd.get_dummies(X, columns=['autor', 'editora'], drop_first=True)
+#One-hot encoding para as colunas categoricas
+X = pd.get_dummies(X, columns=['autor', 'editora', 'GeneroPrimario', 'SubGenero'], 
+                   drop_first=True, 
+                   prefix=['autor', 'editora', 'genero_primario', 'subgenero'])
 
 # Dividir os dados em conjunto de treino e teste balanceando as classes
 X_treino, X_teste, y_treino, y_teste = train_test_split(X, y, test_size = 0.2, random_state=42, stratify=y)
@@ -43,17 +64,20 @@ scaler = StandardScaler()
 X_treino_scaled = scaler.fit_transform(X_treino)
 X_teste_scaled = scaler.transform(X_teste)
 
-# Treinamento com calibração de probabilidade (Platt/sigmoid)
-base_model = SVC(
+# Treinar modelo base
+svm_model = SVC(
     kernel='rbf',
-    C=406.79084943595393,
-    gamma=0.00022592797420156976,
+    C=1.7885301261862006,
+    gamma=0.00011299516083106625,
     shrinking=True,
-    tol=0.0001,
+    tol=0.001,
     random_state=42,
     class_weight='balanced'
 )
-modelo = CalibratedClassifierCV(estimator=base_model, method='sigmoid', cv=5)
+svm_model.fit(X_treino_scaled, y_treino)
+
+# Calibrar o modelo já treinado
+modelo = CalibratedClassifierCV(estimator=svm_model, method='sigmoid', cv='prefit')
 modelo.fit(X_treino_scaled, y_treino)
 
 # Predições

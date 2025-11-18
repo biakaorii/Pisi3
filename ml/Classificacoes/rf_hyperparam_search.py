@@ -20,13 +20,35 @@ df = df[df['avaliacao'] >= 25].copy()
 # Criar a coluna de popularidade, 1 para Popular e 0 para Impopular
 df['popularidade'] = np.where(df['rating'] >= 4.0, 1, 0)
 
+#Criar features de GeneroPrimario e SubGenero a partir da coluna genero
+def extrair_genero_primario(genero_str):
+    if pd.isna(genero_str) or genero_str == 'Desconhecido':
+        return 'Desconhecido'
+    partes = str(genero_str).split('/')
+    if len(partes) > 0:
+        return partes[0].strip()
+    return 'Desconhecido'
+
+def extrair_subgenero(genero_str):
+    if pd.isna(genero_str) or genero_str == 'Desconhecido':
+        return 'Desconhecido'
+    partes = str(genero_str).split('/')
+    if len(partes) > 1:
+        return partes[1].strip()
+    return 'Desconhecido'
+
+df['GeneroPrimario'] = df['genero'].apply(extrair_genero_primario)
+df['SubGenero'] = df['genero'].apply(extrair_subgenero)
+
 # Features e variavel alvo
-features = ['ano', 'paginas', 'querem_ler', 'autor', 'editora']
+features = ['ano', 'paginas', 'querem_ler', 'autor', 'editora', 'GeneroPrimario', 'SubGenero']
 X = df[features]
 y = df['popularidade']
 
 # One-hot encoding para as colunas categóricas
-X = pd.get_dummies(X, columns=['autor', 'editora'], drop_first=True)
+X = pd.get_dummies(X, columns=['autor', 'editora', 'GeneroPrimario', 'SubGenero'], 
+                   drop_first=True, 
+                   prefix=['autor', 'editora', 'genero_primario', 'subgenero'])
 
 # Dividir treino/teste stratificado
 X_treino, X_teste, y_treino, y_teste = train_test_split(
