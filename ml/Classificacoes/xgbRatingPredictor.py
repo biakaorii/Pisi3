@@ -166,3 +166,20 @@ print("CLASSIFICATION REPORT - TESTE")
 print("="*80)
 print(classification_report(y_teste, y_pred, 
                           target_names=['Impopular', 'Popular']))
+
+# ========== SALVAMENTO DO MODELO ==========
+print("="*80)
+print("SALVANDO MODELO")
+print("="*80)
+
+# Criar diretório de modelos se não existir
+import pickle
+modelo_dir = os.path.join(caminho_atual, '..', 'ModeloEscolhido')
+os.makedirs(modelo_dir, exist_ok=True)
+
+# Salvar o modelo
+modelo_path = os.path.join(modelo_dir, 'xgb_rating_predictor.pkl')
+with open(modelo_path, 'wb') as f:
+    pickle.dump(modelo, f)
+print(f"Modelo salvo em: {modelo_path}")
+print("\n")
