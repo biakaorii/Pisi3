@@ -25,41 +25,50 @@ df = df[df['avaliacao'] >= 25].copy()
 #Criar a coluna de popularidade, 1 para Popular e 0 para Impopular
 df['popularidade'] = np.where(df['rating'] >= 4.0, 1, 0)
 
+#Criar features de GeneroPrimario e SubGenero a partir da coluna genero
+def extrair_genero_primario(genero_str):
+    if pd.isna(genero_str) or genero_str == 'Desconhecido':
+        return 'Desconhecido'
+    partes = str(genero_str).split('/')
+    if len(partes) > 0:
+        return partes[0].strip()
+    return 'Desconhecido'
+
+def extrair_subgenero(genero_str):
+    if pd.isna(genero_str) or genero_str == 'Desconhecido':
+        return 'Desconhecido'
+    partes = str(genero_str).split('/')
+    if len(partes) > 1:
+        return partes[1].strip()
+    return 'Desconhecido'
+
+df['GeneroPrimario'] = df['genero'].apply(extrair_genero_primario)
+df['SubGenero'] = df['genero'].apply(extrair_subgenero)
 
 #Features e variavel alvo
-features = ['ano', 'paginas', 'querem_ler', 'autor', "editora"]
+features = ['ano', 'paginas', 'querem_ler', 'autor', "editora", 'GeneroPrimario', 'SubGenero']
 X = df[features]
 y = df['popularidade']
 
-#One-hot encoding para a coluna 'autor'
-X = pd.get_dummies(X, columns=['autor', 'editora'], drop_first=True)
+#One-hot encoding para as colunas categoricas
+X = pd.get_dummies(X, columns=['autor', 'editora', 'GeneroPrimario', 'SubGenero'], 
+                   drop_first=True, 
+                   prefix=['autor', 'editora', 'genero_primario', 'subgenero'])
 
 # Dividir os dados em conjunto de treino e teste balanceando as classes
 X_treino, X_teste, y_treino, y_teste = train_test_split(X, y, test_size = 0.2, random_state=42, stratify=y)
 
-# Treinamento com calibração de probabilidade (Platt/sigmoid)
-base_model = RandomForestClassifier(
+# Treinar modelo base
+rf_model = RandomForestClassifier(
     n_estimators=200,
     max_depth=None,
-    min_samples_split=5,
+    min_samples_split=10,
     min_samples_leaf=1,
     max_features='log2',
     bootstrap=False,
     random_state=42,
     class_weight='balanced'
 )
-modelo = CalibratedClassifierCV(estimator=base_model, method='sigmoid', cv=5)
-modelo.fit(X_treino, y_treino)
-
-# Predições
-y_pred = modelo.predict(X_teste)
-y_pred_treino = modelo.predict(X_treino)
-
-# ========== FEATURE IMPORTANCE GERAL ==========
-# Treinar modelo sem calibração para obter feature importance
-rf_model = RandomForestClassifier(n_estimators=200, min_samples_leaf = 1, min_samples_split=5, 
-                                max_features = 'log2', max_depth = None, bootstrap = False, 
-                                random_state=42, class_weight='balanced')
 rf_model.fit(X_treino, y_treino)
 
 # Feature importance
@@ -67,6 +76,14 @@ feature_importance = pd.DataFrame({
     'feature': X_treino.columns,
     'importance': rf_model.feature_importances_
 }).sort_values('importance', ascending=False)
+
+# Calibrar o modelo já treinado
+modelo = CalibratedClassifierCV(estimator=rf_model, method='sigmoid', cv='prefit')
+modelo.fit(X_treino, y_treino)
+
+# Predições
+y_pred = modelo.predict(X_teste)
+y_pred_treino = modelo.predict(X_treino)
 
 print("="*80)
 print("FEATURE IMPORTANCE GERAL")

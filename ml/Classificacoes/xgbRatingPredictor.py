@@ -25,17 +25,41 @@ df = df[df['avaliacao'] >= 25].copy()
 #Criar a coluna de popularidade, 1 para Popular e 0 para Impopular
 df['popularidade'] = np.where(df['rating'] >= 4.0, 1, 0)
 
+#Criar features de GeneroPrimario e SubGenero a partir da coluna genero
+def extrair_genero_primario(genero_str):
+    if pd.isna(genero_str) or genero_str == 'Desconhecido':
+        return 'Desconhecido'
+    partes = str(genero_str).split('/')
+    if len(partes) > 0:
+        return partes[0].strip()
+    return 'Desconhecido'
+
+def extrair_subgenero(genero_str):
+    if pd.isna(genero_str) or genero_str == 'Desconhecido':
+        return 'Desconhecido'
+    partes = str(genero_str).split('/')
+    if len(partes) > 1:
+        return partes[1].strip()
+    return 'Desconhecido'
+
+df['GeneroPrimario'] = df['genero'].apply(extrair_genero_primario)
+df['SubGenero'] = df['genero'].apply(extrair_subgenero)
 
 #Features e variavel alvo
-features = ['ano', 'paginas', 'querem_ler', 'autor', "editora"]
+features = ['ano', 'paginas', 'querem_ler', 'autor', "editora", 'GeneroPrimario', 'SubGenero']
 X = df[features]
 y = df['popularidade']
 
-#One-hot encoding para a coluna 'autor'
-X = pd.get_dummies(X, columns=['autor', 'editora'], drop_first=True)
+#One-hot encoding para as colunas categoricas
+X = pd.get_dummies(X, columns=['autor', 'editora', 'GeneroPrimario', 'SubGenero'], 
+                   drop_first=True, 
+                   prefix=['autor', 'editora', 'genero_primario', 'subgenero'])
 
 # Limpar nomes das colunas para XGBoost (remover caracteres especiais)
 X.columns = X.columns.str.replace('[', '_', regex=False).str.replace(']', '_', regex=False).str.replace('<', '_', regex=False).str.replace('>', '_', regex=False).str.replace('"', '', regex=False).str.replace(':', '_', regex=False).str.replace(',', '_', regex=False).str.replace('{', '_', regex=False).str.replace('}', '_', regex=False)
+
+# Remover colunas duplicadas que podem ter sido criadas pela limpeza de nomes
+X = X.loc[:, ~X.columns.duplicated()]
 
 # Dividir os dados em conjunto de treino e teste balanceando as classes
 X_treino, X_teste, y_treino, y_teste = train_test_split(X, y, test_size = 0.2, random_state=42, stratify=y)
@@ -43,40 +67,16 @@ X_treino, X_teste, y_treino, y_teste = train_test_split(X, y, test_size = 0.2, r
 # Calcular scale_pos_weight para balanceamento
 scale_pos_weight = (y_treino == 0).sum() / (y_treino == 1).sum()
 
-# Treinamento com calibração de probabilidade (Platt/sigmoid)
-base_model = XGBClassifier(
-    n_estimators=500,
-    max_depth=10,
-    learning_rate=0.01,
-    subsample=0.6,
-    colsample_bytree=1.0,
-    gamma=0.1,
-    reg_alpha=0,
-    reg_lambda=1,
-    min_child_weight=1,
-    scale_pos_weight=scale_pos_weight,
-    random_state=42,
-    eval_metric='logloss',
-    verbosity=0
-)
-modelo = CalibratedClassifierCV(estimator=base_model, method='sigmoid', cv=5)
-modelo.fit(X_treino, y_treino)
-
-# Predições
-y_pred = modelo.predict(X_teste)
-y_pred_treino = modelo.predict(X_treino)
-
-# ========== FEATURE IMPORTANCE GERAL ==========
-# Treinar modelo sem calibração para obter feature importance
+# Treinar modelo base
 xgb_model = XGBClassifier(
-    n_estimators=500,
-    max_depth=10,
-    learning_rate=0.01,
-    subsample=0.6,
-    colsample_bytree=1.0,
-    gamma=0.1,
-    reg_alpha=0,
-    reg_lambda=1,
+    n_estimators=1000,
+    max_depth=6,
+    learning_rate=0.2,
+    subsample=1,
+    colsample_bytree=0.8,
+    gamma=0.5,
+    reg_alpha=0.5,
+    reg_lambda=2,
     min_child_weight=1,
     scale_pos_weight=scale_pos_weight,
     random_state=42,
@@ -90,6 +90,14 @@ feature_importance = pd.DataFrame({
     'feature': X_treino.columns,
     'importance': xgb_model.feature_importances_
 }).sort_values('importance', ascending=False)
+
+# Calibrar o modelo já treinado
+modelo = CalibratedClassifierCV(estimator=xgb_model, method='sigmoid', cv='prefit')
+modelo.fit(X_treino, y_treino)
+
+# Predições
+y_pred = modelo.predict(X_teste)
+y_pred_treino = modelo.predict(X_treino)
 
 print("="*80)
 print("FEATURE IMPORTANCE GERAL")
