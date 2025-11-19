@@ -5,11 +5,14 @@ from sklearn.metrics import (
     confusion_matrix,
     roc_auc_score,
     balanced_accuracy_score,
+    ConfusionMatrixDisplay
 )
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.tree import DecisionTreeClassifier
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 import os
 
 #Encontrar o caminho do dataset
@@ -134,6 +137,18 @@ print(f"Real Impopular    {cm_treino[0,0]:5d}     {cm_treino[0,1]:5d}")
 print(f"     Popular      {cm_treino[1,0]:5d}     {cm_treino[1,1]:5d}")
 print("\n")
 
+# Visualização da matriz de confusão - TREINO
+fig, ax = plt.subplots(figsize=(8, 6))
+sns.heatmap(cm_treino, annot=True, fmt='d', cmap='Greens', 
+            xticklabels=['Impopular', 'Popular'],
+            yticklabels=['Impopular', 'Popular'],
+            cbar_kws={'label': 'Contagem'})
+plt.title('Matriz de Confusão - TREINO\nRandom Forest', fontsize=14, fontweight='bold')
+plt.ylabel('Real', fontsize=12)
+plt.xlabel('Predito', fontsize=12)
+plt.tight_layout()
+plt.show()
+
 # ========== MATRIZ DE CONFUSÃO - TESTE ==========
 cm = confusion_matrix(y_teste, y_pred)
 
@@ -145,6 +160,18 @@ print("              Impopular  Popular")
 print(f"Real Impopular    {cm[0,0]:5d}     {cm[0,1]:5d}")
 print(f"     Popular      {cm[1,0]:5d}     {cm[1,1]:5d}")
 print("\n")
+
+# Visualização da matriz de confusão - TESTE
+fig, ax = plt.subplots(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Greens', 
+            xticklabels=['Impopular', 'Popular'],
+            yticklabels=['Impopular', 'Popular'],
+            cbar_kws={'label': 'Contagem'})
+plt.title('Matriz de Confusão - TESTE\nRandom Forest', fontsize=14, fontweight='bold')
+plt.ylabel('Real', fontsize=12)
+plt.xlabel('Predito', fontsize=12)
+plt.tight_layout()
+plt.show()
 
 # ========== CLASSIFICATION REPORT - TESTE ==========
 print("="*80)
