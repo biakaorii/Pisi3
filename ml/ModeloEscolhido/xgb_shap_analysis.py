@@ -80,18 +80,32 @@ if os.path.exists(shap_cache_file):
         with open(shap_cache_file, 'rb') as f:
             cache_data = pickle.load(f)
             # Reconstruir shap.Explanation a partir dos dados salvos
+            base_vals = cache_data['base_values']
+            # Garantir que base_values tenha a forma correta (um valor por amostra)
+            num_samples = cache_data['shap_values_array'].shape[0]
+            if isinstance(base_vals, (int, float, np.number)):
+                base_vals = np.full(num_samples, float(base_vals))
+            elif isinstance(base_vals, np.ndarray):
+                if base_vals.size == 1:
+                    base_vals = np.full(num_samples, float(base_vals.item()))
+                elif len(base_vals) != num_samples:
+                    # Se o tamanho não bate, repetir o primeiro valor
+                    base_vals = np.full(num_samples, float(base_vals[0]))
+            
             shap_values = shap.Explanation(
                 values=cache_data['shap_values_array'],
-                base_values=cache_data['base_values'],
+                base_values=base_vals,
                 data=cache_data['data'],
                 feature_names=cache_data['feature_names']
             )
             X_sample = cache_data['X_sample']
+            expected_value = cache_data.get('expected_value', base_vals[0] if len(base_vals) > 0 else 0.5)
         print("   ✓ SHAP values carregados do cache!")
         cache_loaded = True
-    except (EOFError, pickle.UnpicklingError, KeyError) as e:
+    except (EOFError, pickle.UnpicklingError, KeyError, TypeError) as e:
         print(f"   ⚠️ Cache corrompido ({e}), recalculando...")
         os.remove(shap_cache_file)
+        cache_loaded = False
         
 if not cache_loaded:
     # Criar amostra para SHAP (para performance)
@@ -106,9 +120,20 @@ if not cache_loaded:
 
     # Converter para formato Explanation do SHAP moderno
     # Para classificação binária, usamos os valores da classe positiva (índice 1)
+    shap_vals = shap_values_array[1] if isinstance(shap_values_array, list) else shap_values_array[:, :, 1]
+    
+    # Criar base_values - deve ser um array com um valor para cada amostra
+    exp_val = explainer.expected_value
+    if isinstance(exp_val, (list, np.ndarray)):
+        base_val_scalar = float(exp_val[1]) if len(exp_val) > 1 else float(exp_val[0])
+    else:
+        base_val_scalar = float(exp_val)
+    
+    base_vals_array = np.full(len(X_sample), base_val_scalar)
+    
     shap_values = shap.Explanation(
-        values=shap_values_array[1] if isinstance(shap_values_array, list) else shap_values_array[:, :, 1],
-        base_values=explainer.expected_value[1] if isinstance(explainer.expected_value, (list, np.ndarray)) else explainer.expected_value,
+        values=shap_vals,
+        base_values=base_vals_array,
         data=X_sample.values,
         feature_names=X_sample.columns.tolist()
     )
@@ -118,11 +143,11 @@ if not cache_loaded:
     print("   💾 Salvando SHAP values no cache...")
     cache_data = {
         'shap_values_array': np.array(shap_values.values),
-        'base_values': np.array(shap_values.base_values),
+        'base_values': base_val_scalar,  # Salvar apenas o valor escalar
         'data': np.array(shap_values.data),
         'feature_names': list(shap_values.feature_names),
         'X_sample': X_sample,
-        'expected_value': explainer.expected_value
+        'expected_value': base_val_scalar
     }
     with open(shap_cache_file, 'wb') as f:
         pickle.dump(cache_data, f)
@@ -278,9 +303,19 @@ shap.save_html(os.path.join(output_dir, 'shap_local_multi_examples.html'), force
 print("\n[EXTRA] Salvando dados SHAP para uso posterior...")
 
 # Salvar valores SHAP e explainer
+# Usar expected_value do cache se disponível, senão do explainer
+if cache_loaded:
+    base_val_to_save = expected_value
+else:
+    exp_val = explainer.expected_value
+    if isinstance(exp_val, (list, np.ndarray)):
+        base_val_to_save = float(exp_val[1]) if len(exp_val) > 1 else float(exp_val[0])
+    else:
+        base_val_to_save = float(exp_val)
+
 shap_data = {
     'shap_values': shap_values.values,
-    'base_value': explainer.expected_value,
+    'base_value': base_val_to_save,
     'data': X_sample,
     'feature_names': X_sample.columns.tolist()
 }

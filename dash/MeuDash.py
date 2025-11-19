@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
@@ -602,18 +603,18 @@ def update_dynamic_content(active_section):
                             dbc.Row([
                                 dbc.Col([
                                     html.Label("Autor:"),
-                                    dcc.Dropdown(
+                                    dbc.Input(
                                         id='input-autor',
-                                        options=[{'label': autor, 'value': autor} for autor in sorted(df['autor'].dropna().unique())][:500],
-                                        placeholder='Selecione o autor'
+                                        type='text',
+                                        placeholder='Digite o nome do autor'
                                     )
                                 ], md=4),
                                 dbc.Col([
                                     html.Label("Editora:"),
-                                    dcc.Dropdown(
+                                    dbc.Input(
                                         id='input-editora',
-                                        options=[{'label': editora, 'value': editora} for editora in sorted(df['editora'].dropna().unique())][:500],
-                                        placeholder='Selecione a editora'
+                                        type='text',
+                                        placeholder='Digite o nome da editora'
                                     )
                                 ], md=4),
                             ], className="mb-3"),
@@ -621,18 +622,18 @@ def update_dynamic_content(active_section):
                             dbc.Row([
                                 dbc.Col([
                                     html.Label("Gênero Primário:"),
-                                    dcc.Dropdown(
+                                    dbc.Input(
                                         id='input-genero-primario',
-                                        options=[{'label': g, 'value': g} for g in sorted(df_generos_exploded['genero'].unique())][:100],
-                                        placeholder='Selecione o gênero principal'
+                                        type='text',
+                                        placeholder='Digite o gênero principal'
                                     )
                                 ], md=6),
                                 dbc.Col([
                                     html.Label("Subgênero:"),
-                                    dcc.Dropdown(
+                                    dbc.Input(
                                         id='input-subgenero',
-                                        options=[{'label': g, 'value': g} for g in sorted(df_generos_exploded['genero'].unique())][:100],
-                                        placeholder='Selecione o subgênero'
+                                        type='text',
+                                        placeholder='Digite o subgênero'
                                     )
                                 ], md=6),
                             ], className="mb-4"),
@@ -776,10 +777,10 @@ def update_dynamic_content(active_section):
             ])
         ])
         
-        # ========== VISÃO GERAL ==========
+        # ========== EXPLICAÇÕES GLOBAIS ==========
         components.append(html.H5([
             html.I(className="fas fa-chart-bar me-2"),
-            "Visão Geral - Importância Global das Features"
+            "Explicações Globais - Importância das Features"
         ], className="mt-4 mb-3"))
         
         # Feature Importance
@@ -787,7 +788,7 @@ def update_dynamic_content(active_section):
             components.append(dbc.Row([
                 dbc.Col([
                     html.Div([
-                        html.H6("Feature Importance - Top Features", className="mb-3"),
+                        html.H6("Feature Importance - Ranking das Features Mais Importantes", className="mb-3"),
                         html.Img(
                             src=shap_images['feature_importance'],
                             style={'width': '100%', 'max-width': '1000px'}
@@ -801,7 +802,7 @@ def update_dynamic_content(active_section):
             components.append(dbc.Row([
                 dbc.Col([
                     html.Div([
-                        html.H6("Multiclass Feature Importance", className="mb-3"),
+                        html.H6("Importância por Classe - Popular vs Impopular", className="mb-3"),
                         html.Img(
                             src=shap_images['multiclass'],
                             style={'width': '100%', 'max-width': '1000px'}
@@ -810,99 +811,17 @@ def update_dynamic_content(active_section):
                 ], md=12)
             ], className="mb-4"))
         
-        # Summary + Beeswarm lado a lado
-        if shap_images.get('summary') or shap_images.get('beeswarm'):
+        # Beeswarm Plot
+        if shap_images.get('beeswarm'):
             components.append(dbc.Row([
                 dbc.Col([
                     html.Div([
-                        html.H6("Summary Plot Global", className="mb-3"),
-                        html.Img(
-                            src=shap_images['summary'],
-                            style={'width': '100%', 'max-width': '700px'}
-                        ) if shap_images.get('summary') else html.P("Imagem não encontrada", className="text-muted")
-                    ], className="graph-container text-center")
-                ], md=6),
-                dbc.Col([
-                    html.Div([
-                        html.H6("Beeswarm Plot Global", className="mb-3"),
+                        html.H6("Beeswarm Plot - Distribuição dos Impactos SHAP", className="mb-3"),
                         html.Img(
                             src=shap_images['beeswarm'],
-                            style={'width': '100%', 'max-width': '700px'}
-                        ) if shap_images.get('beeswarm') else html.P("Imagem não encontrada", className="text-muted")
-                    ], className="graph-container text-center")
-                ], md=6)
-            ], className="mb-4"))
-        
-        # ========== WATERFALL PLOTS ==========
-        components.append(html.H5([
-            html.I(className="fas fa-layer-group me-2"),
-            "Waterfall Plots - Exemplos Individuais"
-        ], className="mt-4 mb-3"))
-        
-        if shap_images.get('waterfall_popular') or shap_images.get('waterfall_impopular'):
-            components.append(dbc.Row([
-                dbc.Col([
-                    html.Div([
-                        html.H6([html.I(className="fas fa-star me-2"), "Livro POPULAR"], className="mb-3"),
-                        html.Img(
-                            src=shap_images['waterfall_popular'],
-                            style={'width': '100%', 'max-width': '700px'}
-                        ) if shap_images.get('waterfall_popular') else html.P("Imagem não encontrada", className="text-muted")
-                    ], className="graph-container text-center")
-                ], md=6),
-                dbc.Col([
-                    html.Div([
-                        html.H6([html.I(className="fas fa-star-half-alt me-2"), "Livro IMPOPULAR"], className="mb-3"),
-                        html.Img(
-                            src=shap_images['waterfall_impopular'],
-                            style={'width': '100%', 'max-width': '700px'}
-                        ) if shap_images.get('waterfall_impopular') else html.P("Imagem não encontrada", className="text-muted")
-                    ], className="graph-container text-center")
-                ], md=6)
-            ], className="mb-4"))
-        
-        # ========== FORCE PLOTS INTERATIVOS ==========
-        components.append(html.H5([
-            html.I(className="fas fa-bezier-curve me-2"),
-            "Force Plots Interativos"
-        ], className="mt-4 mb-3"))
-        
-        if 'popular' in shap_html_contents:
-            components.append(dbc.Row([
-                dbc.Col([
-                    html.Div([
-                        html.H6([html.I(className="fas fa-star me-2"), "Force Plot: Livro Popular"], className="mb-3"),
-                        html.Iframe(
-                            srcDoc=shap_html_contents['popular'],
-                            style={'width': '100%', 'height': '400px', 'border': 'none'}
+                            style={'width': '100%', 'max-width': '1000px'}
                         )
-                    ], className="graph-container")
-                ], md=12)
-            ], className="mb-4"))
-        
-        if 'impopular' in shap_html_contents:
-            components.append(dbc.Row([
-                dbc.Col([
-                    html.Div([
-                        html.H6([html.I(className="fas fa-star-half-alt me-2"), "Force Plot: Livro Impopular"], className="mb-3"),
-                        html.Iframe(
-                            srcDoc=shap_html_contents['impopular'],
-                            style={'width': '100%', 'height': '400px', 'border': 'none'}
-                        )
-                    ], className="graph-container")
-                ], md=12)
-            ], className="mb-4"))
-        
-        if 'multi' in shap_html_contents:
-            components.append(dbc.Row([
-                dbc.Col([
-                    html.Div([
-                        html.H6([html.I(className="fas fa-layer-group me-2"), "Force Plot: Múltiplos Exemplos"], className="mb-3"),
-                        html.Iframe(
-                            srcDoc=shap_html_contents['multi'],
-                            style={'width': '100%', 'height': '600px', 'border': 'none'}
-                        )
-                    ], className="graph-container")
+                    ], className="graph-container text-center")
                 ], md=12)
             ], className="mb-4"))
         
@@ -916,30 +835,22 @@ def update_dynamic_content(active_section):
                         
                         html.H6("📊 Feature Importance:"),
                         html.Ul([
-                            html.Li("Mostra quais features têm maior impacto médio nas predições"),
-                            html.Li("Valores maiores = maior importância para o modelo")
+                            html.Li("Ranking das features mais importantes para o modelo"),
+                            html.Li("Valores maiores = maior impacto nas predições")
                         ]),
                         
-                        html.H6("🎯 Summary & Beeswarm Plot:", className="mt-3"),
+                        html.H6("📊 Importância por Classe:", className="mt-3"),
                         html.Ul([
-                            html.Li("Vermelho = valor alto da feature, Azul = valor baixo"),
-                            html.Li("Eixo X: impacto no rating (positivo aumenta, negativo diminui)"),
-                            html.Li("Cada ponto representa um livro diferente")
+                            html.Li("Compara features importantes para livros populares vs impopulares"),
+                            html.Li("Esquerda: features importantes para IMPOPULARES (rating < 4.0)"),
+                            html.Li("Direita: features importantes para POPULARES (rating >= 4.0)")
                         ]),
                         
-                        html.H6("🌊 Waterfall Plots:", className="mt-3"),
+                        html.H6("🎯 Beeswarm Plot:", className="mt-3"),
                         html.Ul([
-                            html.Li("Decomposição da predição para um livro específico"),
-                            html.Li("Cada barra mostra o impacto de uma feature"),
-                            html.Li("Começa do valor base (E[f(X)]) até a predição final (f(x))")
-                        ]),
-                        
-                        html.H6("⚡ Force Plots Interativos:", className="mt-3"),
-                        html.Ul([
-                            html.Li("Versão interativa com hover para ver valores exatos"),
-                            html.Li("Features em vermelho aumentam a predição"),
-                            html.Li("Features em azul diminuem a predição"),
-                            html.Li("Tamanho da barra = magnitude do impacto")
+                            html.Li("Cada ponto = um livro diferente"),
+                            html.Li("Cor: Vermelho = valor alto da feature, Azul = valor baixo"),
+                            html.Li("Eixo X: impacto SHAP (positivo aumenta popularidade, negativo diminui)")
                         ])
                     ])
                 ], className="shadow-sm")
@@ -1529,6 +1440,37 @@ def prever_popularidade(n_clicks, ano, paginas, querem_ler, autor, editora, gene
         predicao = modelo.predict(input_encoded)[0]
         probabilidades = modelo.predict_proba(input_encoded)[0]
         
+        # Gerar explicação SHAP para esta predição
+        import shap
+        force_plot_html = None
+        try:
+            # Carregar dados SHAP
+            shap_data_path = os.path.join(caminho_atual, '..', 'ml', 'ModeloEscolhido', 'saida', 'shap_data.pkl')
+            if os.path.exists(shap_data_path):
+                with open(shap_data_path, 'rb') as f:
+                    shap_data = pickle.load(f)
+                
+                # Usar KernelExplainer para explicar esta predição específica
+                background = shap.sample(pd.DataFrame(shap_data['data'], columns=shap_data['feature_names']), 50)
+                explainer = shap.KernelExplainer(modelo.predict_proba, background)
+                shap_values = explainer.shap_values(input_encoded)
+                
+                # Para classificação binária, usar valores da classe positiva
+                shap_vals = shap_values[1] if isinstance(shap_values, list) else shap_values[:, :, 1]
+                base_val = explainer.expected_value[1] if isinstance(explainer.expected_value, (list, np.ndarray)) else explainer.expected_value
+                
+                # Gerar force plot
+                force_plot = shap.force_plot(
+                    base_val,
+                    shap_vals[0],
+                    input_encoded.iloc[0],
+                    matplotlib=False,
+                    show=False
+                )
+                force_plot_html = f"<head>{shap.getjs()}</head><body>{force_plot.html()}</body>"
+        except Exception as e:
+            print(f"Erro ao gerar force plot: {e}")
+        
         # Resultado
         if predicao == 1:
             resultado_classe = "POPULAR"
@@ -1541,7 +1483,8 @@ def prever_popularidade(n_clicks, ano, paginas, querem_ler, autor, editora, gene
             resultado_icone = "fa-star-half-alt"
             prob_classe = probabilidades[0] * 100
         
-        return dbc.Row([
+        # Criar componentes do resultado
+        resultado_components = [
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -1589,8 +1532,40 @@ def prever_popularidade(n_clicks, ano, paginas, querem_ler, autor, editora, gene
                     ])
                 ], className="shadow-sm", color="light")
             ], md=8, className="mx-auto")
-        ], className="mt-4")
+        ]
         
+        # Adicionar force plot se disponível
+        if force_plot_html:
+            resultado_components.append(
+                dbc.Col([
+                    html.Div([
+                        html.H5([
+                            html.I(className="fas fa-chart-line me-2"),
+                            "Explicação Local - Force Plot SHAP"
+                        ], className="mt-4 mb-3"),
+                        dbc.Card([
+                            dbc.CardBody([
+                                html.P([
+                                    html.I(className="fas fa-info-circle me-2"),
+                                    "Este gráfico mostra como cada feature influenciou esta predição específica:"
+                                ], className="text-muted mb-3"),
+                                html.Ul([
+                                    html.Li("Features em VERMELHO empurram para POPULAR"),
+                                    html.Li("Features em AZUL empurram para IMPOPULAR"),
+                                    html.Li("Tamanho da barra = magnitude do impacto")
+                                ], className="small text-muted mb-3"),
+                                html.Iframe(
+                                    srcDoc=force_plot_html,
+                                    style={'width': '100%', 'height': '120px', 'border': 'none'}
+                                )
+                            ])
+                        ], className="shadow-sm")
+                    ])
+                ], md=10, className="mx-auto")
+            )
+        
+        return dbc.Row(resultado_components, className="mt-4")
+    
     except Exception as e:
         return dbc.Alert([
             html.I(className="fas fa-exclamation-circle me-2"),
@@ -1599,42 +1574,3 @@ def prever_popularidade(n_clicks, ano, paginas, querem_ler, autor, editora, gene
 
 if __name__ == '__main__':
     app.run(debug=True, port=8051)
-
-import os
-import base64
-
-caminho_ml = os.path.join(os.path.dirname(__file__), '..', 'ml', 'ModeloEscolhido', 'saida')
-
-print("="*80)
-print("DIAGNÓSTICO - ARQUIVOS SHAP")
-print("="*80)
-print(f"\nCaminho procurado: {os.path.abspath(caminho_ml)}")
-print(f"Caminho existe? {os.path.exists(caminho_ml)}")
-
-if os.path.exists(caminho_ml):
-    print(f"\nArquivos encontrados na pasta:")
-    arquivos = os.listdir(caminho_ml)
-    for arq in sorted(arquivos):
-        filepath = os.path.join(caminho_ml, arq)
-        tamanho = os.path.getsize(filepath) / 1024  # KB
-        print(f"  ✓ {arq} ({tamanho:.1f} KB)")
-    
-    print(f"\n{'='*80}")
-    print("TESTANDO CONVERSÃO BASE64")
-    print("="*80)
-    
-    # Testar conversão de uma imagem
-    teste_img = os.path.join(caminho_ml, 'shap_feature_importance.png')
-    if os.path.exists(teste_img):
-        try:
-            with open(teste_img, 'rb') as f:
-                encoded = base64.b64encode(f.read()).decode()
-            print(f"\n✓ Conversão OK: {teste_img}")
-            print(f"  Tamanho base64: {len(encoded)} caracteres")
-            print(f"  Primeiros 100 chars: {encoded[:100]}...")
-        except Exception as e:
-            print(f"\n✗ ERRO na conversão: {e}")
-    else:
-        print(f"\n✗ Arquivo não encontrado: {teste_img}")
-else:
-    print("\n✗ PASTA NÃO EXISTE!")
