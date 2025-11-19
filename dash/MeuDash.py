@@ -308,6 +308,12 @@ app.layout = dbc.Container([
     # Store para a seção ativa
     dcc.Store(id='active-section', data='popularidade'),
     
+    # Stores para valores dos filtros
+    dcc.Store(id='store-filtro-genero', data='todos'),
+    dcc.Store(id='store-filtro-idioma', data='todos'),
+    dcc.Store(id='store-filtro-editora', data='todos'),
+    dcc.Store(id='store-filtro-ano', data=[int(df['ano'].min()), int(df['ano'].max())]),
+    
     # Font Awesome CSS
     html.Link(
         rel="stylesheet",
@@ -334,6 +340,7 @@ app.layout = dbc.Container([
                 dbc.NavItem(dbc.Button("Idiomas", id="nav-idiomas", className="nav-btn", n_clicks=0)),
                 dbc.NavItem(dbc.Button("Leitura", id="nav-leitura", className="nav-btn", n_clicks=0)),
                 dbc.NavItem(dbc.Button("Público", id="nav-publico", className="nav-btn", n_clicks=0)),
+                dbc.NavItem(dbc.Button("Classificador", id="nav-classificador", className="nav-btn", n_clicks=0)),
                 dbc.NavItem(dbc.Button("SHAP Analysis", id="nav-shap", className="nav-btn", n_clicks=0)),
             ], pills=True, justified=True, className="mb-4 navigation-bar")
         ])
@@ -345,8 +352,84 @@ app.layout = dbc.Container([
         dbc.Col(html.Div(id='kpis-container'), width=12)
     ], className="mb-4"),
     
-    # Filtros - sempre visíveis
+    # Filtros - condicionalmente visíveis
+    html.Div(id='filtros-container'),
+    
+    # Container para conteúdo dinâmico das seções
+    html.Div(id='dynamic-content'),
+    
+
     dbc.Row([
+        dbc.Col([
+            html.Hr(),
+            html.P("Dashboard desenvolvido para análise de dataset de livros", 
+                   className="text-center text-muted mb-4")
+        ])
+    ])
+    
+], fluid=True)
+
+
+# Callback para controlar a seção ativa
+@callback(
+    [Output('active-section', 'data'),
+     Output('nav-popularidade', 'className'),
+     Output('nav-avaliacao', 'className'),
+     Output('nav-generos', 'className'),
+     Output('nav-idiomas', 'className'),
+     Output('nav-leitura', 'className'),
+     Output('nav-publico', 'className'),
+     Output('nav-classificador', 'className'),
+     Output('nav-shap', 'className')],
+    [Input('nav-popularidade', 'n_clicks'),
+     Input('nav-avaliacao', 'n_clicks'),
+     Input('nav-generos', 'n_clicks'),
+     Input('nav-idiomas', 'n_clicks'),
+     Input('nav-leitura', 'n_clicks'),
+     Input('nav-publico', 'n_clicks'),
+     Input('nav-classificador', 'n_clicks'),
+     Input('nav-shap', 'n_clicks')],
+    prevent_initial_call=False
+)
+def update_active_section(pop_clicks, av_clicks, gen_clicks, idi_clicks, leit_clicks, pub_clicks, class_clicks, shap_clicks):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return 'popularidade', 'nav-btn nav-btn-active', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn'
+    
+    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    
+    classes = ['nav-btn'] * 8
+    section_map = {
+        'nav-popularidade': (0, 'popularidade'),
+        'nav-avaliacao': (1, 'avaliacao'),
+        'nav-generos': (2, 'generos'),
+        'nav-idiomas': (3, 'idiomas'),
+        'nav-leitura': (4, 'leitura'),
+        'nav-publico': (5, 'publico'),
+        'nav-classificador': (6, 'classificador'),
+        'nav-shap': (7, 'shap')
+    }
+    
+    if button_id in section_map:
+        idx, section = section_map[button_id]
+        classes[idx] = 'nav-btn nav-btn-active'
+        return section, *classes
+    
+    return 'popularidade', 'nav-btn nav-btn-active', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn'
+
+
+# Callback para mostrar/ocultar filtros baseado na seção ativa
+@callback(
+    Output('filtros-container', 'children'),
+    Input('active-section', 'data')
+)
+def update_filtros_visibility(active_section):
+    # Não mostrar filtros para classificador e SHAP
+    if active_section in ['classificador', 'shap']:
+        return html.Div()
+    
+    # Mostrar filtros para outras seções
+    return dbc.Row([
         dbc.Col([
             html.Label("Filtrar por Gênero:"),
             dcc.Dropdown(
@@ -389,66 +472,7 @@ app.layout = dbc.Container([
                 tooltip={"placement": "bottom", "always_visible": True}
             )
         ], md=3)
-    ], className="mb-4"),
-    
-    # Container para conteúdo dinâmico das seções
-    html.Div(id='dynamic-content'),
-    
-
-    dbc.Row([
-        dbc.Col([
-            html.Hr(),
-            html.P("Dashboard desenvolvido para análise de dataset de livros", 
-                   className="text-center text-muted mb-4")
-        ])
-    ])
-    
-], fluid=True)
-
-
-# Callback para controlar a seção ativa
-@callback(
-    [Output('active-section', 'data'),
-     Output('nav-popularidade', 'className'),
-     Output('nav-avaliacao', 'className'),
-     Output('nav-generos', 'className'),
-     Output('nav-idiomas', 'className'),
-     Output('nav-leitura', 'className'),
-     Output('nav-publico', 'className'),
-     Output('nav-shap', 'className')],
-    [Input('nav-popularidade', 'n_clicks'),
-     Input('nav-avaliacao', 'n_clicks'),
-     Input('nav-generos', 'n_clicks'),
-     Input('nav-idiomas', 'n_clicks'),
-     Input('nav-leitura', 'n_clicks'),
-     Input('nav-publico', 'n_clicks'),
-     Input('nav-shap', 'n_clicks')],
-    prevent_initial_call=False
-)
-def update_active_section(pop_clicks, av_clicks, gen_clicks, idi_clicks, leit_clicks, pub_clicks, shap_clicks):
-    ctx = dash.callback_context
-    if not ctx.triggered:
-        return 'popularidade', 'nav-btn nav-btn-active', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn'
-    
-    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    
-    classes = ['nav-btn'] * 7
-    section_map = {
-        'nav-popularidade': (0, 'popularidade'),
-        'nav-avaliacao': (1, 'avaliacao'),
-        'nav-generos': (2, 'generos'),
-        'nav-idiomas': (3, 'idiomas'),
-        'nav-leitura': (4, 'leitura'),
-        'nav-publico': (5, 'publico'),
-        'nav-shap': (6, 'shap')
-    }
-    
-    if button_id in section_map:
-        idx, section = section_map[button_id]
-        classes[idx] = 'nav-btn nav-btn-active'
-        return section, *classes
-    
-    return 'popularidade', 'nav-btn nav-btn-active', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn', 'nav-btn'
+    ], className="mb-4")
 
 
 # Callback para atualizar conteúdo dinâmico
@@ -536,6 +560,93 @@ def update_dynamic_content(active_section):
                 dbc.Col([html.Div([dcc.Graph(id='metricas-leitura')], className="graph-container")], md=6),
                 dbc.Col([html.Div([dcc.Graph(id='taxa-abandono-genero')], className="graph-container")], md=6),
             ], className="mb-4 graph-row")
+        ])
+    
+    elif active_section == 'classificador':
+        return html.Div([
+            html.Hr(className="section-divider"),
+            dbc.Row([
+                dbc.Col([
+                    html.H4([
+                        html.I(className="fas fa-robot me-2"),
+                        "Classificador de Popularidade de Livros"
+                    ], className="mt-3 mb-3"),
+                    html.P([
+                        html.I(className="fas fa-info-circle me-2"),
+                        "Preencha as informações do livro para prever se ele será Popular (rating ≥ 4.0) ou Impopular (rating < 4.0)"
+                    ], className="text-muted")
+                ])
+            ]),
+            
+            dbc.Row([
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardBody([
+                            html.H5([html.I(className="fas fa-edit me-2"), "Dados do Livro"], className="mb-4"),
+                            
+                            dbc.Row([
+                                dbc.Col([
+                                    html.Label("Ano de Publicação:"),
+                                    dbc.Input(id='input-ano', type='number', placeholder='Ex: 2020', min=1800, max=2030, value=2020)
+                                ], md=4),
+                                dbc.Col([
+                                    html.Label("Número de Páginas:"),
+                                    dbc.Input(id='input-paginas', type='number', placeholder='Ex: 300', min=1, max=5000, value=300)
+                                ], md=4),
+                                dbc.Col([
+                                    html.Label("Querem Ler:"),
+                                    dbc.Input(id='input-querem-ler', type='number', placeholder='Ex: 100', min=0, value=50)
+                                ], md=4),
+                            ], className="mb-3"),
+                            
+                            dbc.Row([
+                                dbc.Col([
+                                    html.Label("Autor:"),
+                                    dcc.Dropdown(
+                                        id='input-autor',
+                                        options=[{'label': autor, 'value': autor} for autor in sorted(df['autor'].dropna().unique())][:500],
+                                        placeholder='Selecione o autor'
+                                    )
+                                ], md=4),
+                                dbc.Col([
+                                    html.Label("Editora:"),
+                                    dcc.Dropdown(
+                                        id='input-editora',
+                                        options=[{'label': editora, 'value': editora} for editora in sorted(df['editora'].dropna().unique())][:500],
+                                        placeholder='Selecione a editora'
+                                    )
+                                ], md=4),
+                            ], className="mb-3"),
+                            
+                            dbc.Row([
+                                dbc.Col([
+                                    html.Label("Gênero Primário:"),
+                                    dcc.Dropdown(
+                                        id='input-genero-primario',
+                                        options=[{'label': g, 'value': g} for g in sorted(df_generos_exploded['genero'].unique())][:100],
+                                        placeholder='Selecione o gênero principal'
+                                    )
+                                ], md=6),
+                                dbc.Col([
+                                    html.Label("Subgênero:"),
+                                    dcc.Dropdown(
+                                        id='input-subgenero',
+                                        options=[{'label': g, 'value': g} for g in sorted(df_generos_exploded['genero'].unique())][:100],
+                                        placeholder='Selecione o subgênero'
+                                    )
+                                ], md=6),
+                            ], className="mb-4"),
+                            
+                            dbc.Button([
+                                html.I(className="fas fa-magic me-2"),
+                                "Prever Popularidade"
+                            ], id='btn-prever', color='success', size='lg', className='w-100')
+                        ])
+                    ], className="shadow-sm")
+                ], md=12)
+            ], className="mb-4"),
+            
+            html.Div(id='resultado-predicao')
         ])
     
     elif active_section == 'publico':
@@ -840,14 +951,65 @@ def update_dynamic_content(active_section):
     return html.Div()
 
 
+# Clientside callbacks para sincronizar filtros com stores
+app.clientside_callback(
+    """
+    function(value) {
+        return value || 'todos';
+    }
+    """,
+    Output('store-filtro-genero', 'data'),
+    Input('filtro-genero', 'value'),
+    prevent_initial_call=True
+)
+
+app.clientside_callback(
+    """
+    function(value) {
+        return value || 'todos';
+    }
+    """,
+    Output('store-filtro-idioma', 'data'),
+    Input('filtro-idioma', 'value'),
+    prevent_initial_call=True
+)
+
+app.clientside_callback(
+    """
+    function(value) {
+        return value || 'todos';
+    }
+    """,
+    Output('store-filtro-editora', 'data'),
+    Input('filtro-editora', 'value'),
+    prevent_initial_call=True
+)
+
+app.clientside_callback(
+    """
+    function(value) {
+        return value || [1800, 2030];
+    }
+    """,
+    Output('store-filtro-ano', 'data'),
+    Input('filtro-ano', 'value'),
+    prevent_initial_call=True
+)
+
+# Callback para mostrar/ocultar KPIs baseado na seção ativa
 @callback(
     Output('kpis-container', 'children'),
-    Input('filtro-genero', 'value'),
-    Input('filtro-idioma', 'value'),
-    Input('filtro-editora', 'value'),
-    Input('filtro-ano', 'value')
+    Input('active-section', 'data'),
+    Input('store-filtro-genero', 'data'),
+    Input('store-filtro-idioma', 'data'),
+    Input('store-filtro-editora', 'data'),
+    Input('store-filtro-ano', 'data')
 )
-def atualizar_kpis(genero, idioma, editora, ano_range):
+def atualizar_kpis(active_section, genero, idioma, editora, ano_range):
+    # Não mostrar KPIs para classificador e SHAP
+    if active_section in ['classificador', 'shap']:
+        return html.Div()
+    
     df_filtrado = filtrar_dados(genero, idioma, editora, ano_range)
     kpis = {
         'total_livros': len(df_filtrado),
@@ -1297,6 +1459,143 @@ def atualizar_generos_publico(idioma, ano_range):
     )
     fig.update_xaxes(tickangle=45)
     return fig
+
+# Callback para o classificador
+@callback(
+    Output('resultado-predicao', 'children'),
+    Input('btn-prever', 'n_clicks'),
+    [dash.dependencies.State('input-ano', 'value'),
+     dash.dependencies.State('input-paginas', 'value'),
+     dash.dependencies.State('input-querem-ler', 'value'),
+     dash.dependencies.State('input-autor', 'value'),
+     dash.dependencies.State('input-editora', 'value'),
+     dash.dependencies.State('input-genero-primario', 'value'),
+     dash.dependencies.State('input-subgenero', 'value')],
+    prevent_initial_call=True
+)
+def prever_popularidade(n_clicks, ano, paginas, querem_ler, autor, editora, genero_primario, subgenero):
+    import pickle
+    
+    # Validações
+    if not all([ano, paginas is not None, querem_ler is not None]):
+        return dbc.Alert([
+            html.I(className="fas fa-exclamation-triangle me-2"),
+            "Por favor, preencha todos os campos numéricos obrigatórios!"
+        ], color="warning", className="mt-3")
+    
+    try:
+        # Carregar modelo
+        modelo_path = os.path.join(caminho_atual, '..', 'ml', 'ModeloEscolhido', 'xgb_rating_predictor.pkl')
+        if not os.path.exists(modelo_path):
+            return dbc.Alert([
+                html.I(className="fas fa-times-circle me-2"),
+                f"Modelo não encontrado em: {modelo_path}"
+            ], color="danger", className="mt-3")
+        
+        with open(modelo_path, 'rb') as f:
+            modelo = pickle.load(f)
+        
+        # Preparar dados de entrada
+        input_data = pd.DataFrame({
+            'ano': [ano],
+            'paginas': [paginas],
+            'querem_ler': [querem_ler],
+            'autor': [autor if autor else 'Desconhecido'],
+            'editora': [editora if editora else 'Desconhecido'],
+            'GeneroPrimario': [genero_primario if genero_primario else 'Desconhecido'],
+            'SubGenero': [subgenero if subgenero else 'Desconhecido']
+        })
+        
+        # One-hot encoding
+        input_encoded = pd.get_dummies(input_data, columns=['autor', 'editora', 'GeneroPrimario', 'SubGenero'],
+                                        drop_first=True,
+                                        prefix=['autor', 'editora', 'genero_primario', 'subgenero'])
+        
+        # Limpar nomes das colunas
+        input_encoded.columns = input_encoded.columns.str.replace('[', '_', regex=False).str.replace(']', '_', regex=False).str.replace('<', '_', regex=False).str.replace('>', '_', regex=False).str.replace('"', '', regex=False).str.replace(':', '_', regex=False).str.replace(',', '_', regex=False).str.replace('{', '_', regex=False).str.replace('}', '_', regex=False)
+        
+        # Obter colunas do modelo treinado
+        model_features = modelo.calibrated_classifiers_[0].estimator.get_booster().feature_names
+        
+        # Adicionar colunas faltantes com 0
+        for col in model_features:
+            if col not in input_encoded.columns:
+                input_encoded[col] = 0
+        
+        # Reordenar colunas para match do modelo
+        input_encoded = input_encoded[model_features]
+        
+        # Fazer predição
+        predicao = modelo.predict(input_encoded)[0]
+        probabilidades = modelo.predict_proba(input_encoded)[0]
+        
+        # Resultado
+        if predicao == 1:
+            resultado_classe = "POPULAR"
+            resultado_cor = "success"
+            resultado_icone = "fa-star"
+            prob_classe = probabilidades[1] * 100
+        else:
+            resultado_classe = "IMPOPULAR"
+            resultado_cor = "warning"
+            resultado_icone = "fa-star-half-alt"
+            prob_classe = probabilidades[0] * 100
+        
+        return dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className=f"fas {resultado_icone} me-2"),
+                            f"Predição: {resultado_classe}"
+                        ], className=f"text-{resultado_cor} text-center mb-3"),
+                        
+                        html.Div([
+                            html.H5("Confiança da Predição:", className="text-center mb-3"),
+                            html.H2(f"{prob_classe:.1f}%", className=f"text-{resultado_cor} text-center fw-bold mb-4"),
+                            
+                            html.Hr(),
+                            
+                            html.H6("Probabilidades por Classe:", className="mb-3"),
+                            dbc.Row([
+                                dbc.Col([
+                                    html.Div([
+                                        html.P("Impopular", className="mb-1 fw-bold"),
+                                        dbc.Progress(value=probabilidades[0]*100, color="warning", className="mb-2", style={"height": "25px"}),
+                                        html.P(f"{probabilidades[0]*100:.1f}%", className="text-center")
+                                    ])
+                                ], md=6),
+                                dbc.Col([
+                                    html.Div([
+                                        html.P("Popular", className="mb-1 fw-bold"),
+                                        dbc.Progress(value=probabilidades[1]*100, color="success", className="mb-2", style={"height": "25px"}),
+                                        html.P(f"{probabilidades[1]*100:.1f}%", className="text-center")
+                                    ])
+                                ], md=6)
+                            ]),
+                            
+                            html.Hr(className="mt-4"),
+                            
+                            html.H6("Dados Utilizados:", className="mb-3"),
+                            html.Ul([
+                                html.Li(f"Ano: {ano}"),
+                                html.Li(f"Páginas: {paginas}"),
+                                html.Li(f"Querem Ler: {querem_ler}"),
+                                html.Li(f"Autor: {autor if autor else 'Não especificado'}"),
+                                html.Li(f"Editora: {editora if editora else 'Não especificado'}"),
+                                html.Li(f"Gênero: {genero_primario if genero_primario else 'Não especificado'} / {subgenero if subgenero else 'Não especificado'}"),
+                            ])
+                        ])
+                    ])
+                ], className="shadow-sm", color="light")
+            ], md=8, className="mx-auto")
+        ], className="mt-4")
+        
+    except Exception as e:
+        return dbc.Alert([
+            html.I(className="fas fa-exclamation-circle me-2"),
+            f"Erro ao fazer predição: {str(e)}"
+        ], color="danger", className="mt-3")
 
 if __name__ == '__main__':
     app.run(debug=True, port=8051)
